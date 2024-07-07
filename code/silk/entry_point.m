@@ -1,14 +1,41 @@
 @import AppKit;
+@import Metal;
+@import simd;
 
 #define function static
+#define global static
+#define local_persist static
 
 #define Min(x, y) (((x) < (y)) ? (x) : (y))
 #define Max(x, y) (((x) > (y)) ? (x) : (y))
+
+@interface
+CALayer (Private)
+- (void)setContentsChanged;
+@end
+
+typedef struct
+{
+	simd_float2 resolution;
+	simd_float2 position;
+	simd_float2 size;
+} VertexArguments;
 
 @interface MainView : NSView <CALayerDelegate>
 @end
 
 @implementation MainView
+{
+	id<MTLDevice> device;
+	id<MTLCommandQueue> command_queue;
+	id<MTLRenderPipelineState> pipeline_state;
+
+	IOSurfaceRef io_surface;
+	id<MTLTexture> texture;
+	simd_float2 mouse_location;
+
+	NSTrackingArea *tracking_area;
+}
 
 - (instancetype)initWithFrame:(NSRect)frame
 {
@@ -16,13 +43,116 @@
 	self.layer = [CALayer layer];
 	self.layer.delegate = self;
 	self.wantsLayer = YES;
-	self.layer.needsDisplayOnBoundsChange = YES;
+
+	device = MTLCreateSystemDefaultDevice();
+	command_queue = [device newCommandQueue];
+
+	id<MTLLibrary> library = [device newDefaultLibrary];
+
+	MTLRenderPipelineDescriptor *descriptor = [[MTLRenderPipelineDescriptor alloc] init];
+	descriptor.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm;
+	descriptor.vertexFunction = [library newFunctionWithName:@"VertexMain"];
+	descriptor.fragmentFunction = [library newFunctionWithName:@"FragmentMain"];
+
+	pipeline_state = [device newRenderPipelineStateWithDescriptor:descriptor error:nil];
+
 	return self;
 }
 
 - (void)displayLayer:(CALayer *)layer
 {
-	self.layer.backgroundColor = NSColor.systemPurpleColor.CGColor;
+	id<MTLCommandBuffer> command_buffer = [command_queue commandBuffer];
+
+	MTLRenderPassDescriptor *descriptor = [[MTLRenderPassDescriptor alloc] init];
+	descriptor.colorAttachments[0].texture = texture;
+	descriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
+	descriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.5, 0.5, 0.5, 1);
+
+	id<MTLRenderCommandEncoder> encoder =
+	        [command_buffer renderCommandEncoderWithDescriptor:descriptor];
+
+	VertexArguments arguments = {0};
+	arguments.resolution.x = texture.width;
+	arguments.resolution.y = texture.height;
+	arguments.position = mouse_location;
+	arguments.size = simd_make_float2(200, 200);
+
+	[encoder setRenderPipelineState:pipeline_state];
+	[encoder setVertexBytes:&arguments length:sizeof(arguments) atIndex:0];
+	[encoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:3];
+
+	[encoder endEncoding];
+
+	[command_buffer commit];
+	[command_buffer waitUntilCompleted];
+
+	[self.layer setContentsChanged];
+}
+
+- (void)mouseMoved:(NSEvent *)event
+{
+	NSPoint point = [self convertPointToBacking:event.locationInWindow];
+	point.y = texture.height - point.y;
+	mouse_location.x = (float)point.x;
+	mouse_location.y = (float)point.y;
+	self.needsDisplay = YES;
+	[self.layer setNeedsDisplay];
+}
+
+- (void)updateTrackingAreas
+{
+	[super updateTrackingAreas];
+
+	[self removeTrackingArea:tracking_area];
+	tracking_area =
+	        [[NSTrackingArea alloc] initWithRect:self.bounds
+	                                     options:NSTrackingActiveAlways | NSTrackingMouseMoved
+	                                       owner:self
+	                                    userInfo:nil];
+	[self addTrackingArea:tracking_area];
+}
+
+- (void)layoutSublayersOfLayer:(CALayer *)layer
+{
+	[self updateIOSurface];
+	[self.layer setNeedsDisplay];
+}
+
+- (void)viewDidChangeBackingProperties
+{
+	[super viewDidChangeBackingProperties];
+
+	self.layer.contentsScale = self.window.backingScaleFactor;
+	[self updateIOSurface];
+	[self.layer setNeedsDisplay];
+}
+
+- (void)updateIOSurface
+{
+	NSSize size = [self convertSizeToBacking:self.layer.frame.size];
+
+	NSDictionary *properties = @{
+		(__bridge NSString *)kIOSurfaceWidth : @(size.width),
+		(__bridge NSString *)kIOSurfaceHeight : @(size.height),
+		(__bridge NSString *)kIOSurfaceBytesPerElement : @4,
+		(__bridge NSString *)kIOSurfacePixelFormat : @(kCVPixelFormatType_32BGRA),
+	};
+
+	MTLTextureDescriptor *descriptor = [[MTLTextureDescriptor alloc] init];
+	descriptor.width = (NSUInteger)size.width;
+	descriptor.height = (NSUInteger)size.height;
+	descriptor.usage = MTLTextureUsageRenderTarget;
+	descriptor.pixelFormat = MTLPixelFormatBGRA8Unorm;
+
+	if (io_surface != NULL)
+	{
+		CFRelease(io_surface);
+	}
+
+	io_surface = IOSurfaceCreate((__bridge CFDictionaryRef)properties);
+	texture = [device newTextureWithDescriptor:descriptor iosurface:io_surface plane:0];
+
+	self.layer.contents = (__bridge id)io_surface;
 }
 
 @end
@@ -267,6 +397,10 @@ InsetRect(NSRect rect, NSEdgeInsets insets)
 int
 main(void)
 {
+	setenv("MTL_SHADER_VALIDATION", "1", 1);
+	setenv("MTL_DEBUG_LAYER", "1", 1);
+	setenv("MTL_DEBUG_LAYER_WARNING_MODE", "nslog", 1);
+
 	[NSApplication sharedApplication];
 	AppDelegate *app_delegate = [[AppDelegate alloc] init];
 	NSApp.delegate = app_delegate;

@@ -2,7 +2,7 @@
 
 set -e
 
-clang-format -i code/**/*.m
+clang-format -i code/**/*.m code/**/*.metal
 
 rm -rf "build"
 
@@ -28,3 +28,7 @@ clang \
 	-Wstrict-prototypes \
 	-Wno-unused-parameter \
 	code/silk/entry_point.m
+
+xcrun metal \
+	-o "build/Silk.app/Contents/Resources/default.metallib" \
+	"code/silk/shaders.metal"

@@ -5,16 +5,24 @@
 #define Min(x, y) (((x) < (y)) ? (x) : (y))
 #define Max(x, y) (((x) > (y)) ? (x) : (y))
 
-@interface MainView : NSView
+@interface MainView : NSView <CALayerDelegate>
 @end
 
 @implementation MainView
 
-- (void)drawRect:(NSRect)dirtyRect
+- (instancetype)initWithFrame:(NSRect)frame
 {
-	[super drawRect:dirtyRect];
-	[NSColor.systemPurpleColor setFill];
-	NSRectFill(self.bounds);
+	self = [super initWithFrame:frame];
+	self.layer = [CALayer layer];
+	self.layer.delegate = self;
+	self.wantsLayer = YES;
+	self.layer.needsDisplayOnBoundsChange = YES;
+	return self;
+}
+
+- (void)displayLayer:(CALayer *)layer
+{
+	self.layer.backgroundColor = NSColor.systemPurpleColor.CGColor;
 }
 
 @end

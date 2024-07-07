@@ -71,11 +71,13 @@ typedef struct
 	id<MTLRenderCommandEncoder> encoder =
 	        [command_buffer renderCommandEncoderWithDescriptor:descriptor];
 
+	float scale_factor = (float)self.window.backingScaleFactor;
+
 	VertexArguments arguments = {0};
 	arguments.resolution.x = texture.width;
 	arguments.resolution.y = texture.height;
-	arguments.position = mouse_location;
-	arguments.size = simd_make_float2(200, 200);
+	arguments.position = mouse_location * scale_factor;
+	arguments.size = simd_make_float2(100, 100) * scale_factor;
 
 	[encoder setRenderPipelineState:pipeline_state];
 	[encoder setVertexBytes:&arguments length:sizeof(arguments) atIndex:0];
@@ -91,8 +93,8 @@ typedef struct
 
 - (void)mouseMoved:(NSEvent *)event
 {
-	NSPoint point = [self convertPointToBacking:event.locationInWindow];
-	point.y = texture.height - point.y;
+	NSPoint point = event.locationInWindow;
+	point.y = self.frame.size.height - point.y;
 	mouse_location.x = (float)point.x;
 	mouse_location.y = (float)point.y;
 	self.needsDisplay = YES;

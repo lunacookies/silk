@@ -66,127 +66,131 @@
 - (void)populateMainMenu
 {
 	NSBundle *bundle = [NSBundle mainBundle];
-	NSString *displayName = [bundle objectForInfoDictionaryKey:@"CFBundleDisplayName"];
+	NSString *display_name = [bundle objectForInfoDictionaryKey:@"CFBundleDisplayName"];
 
-	NSMenu *mainMenu = [[NSMenu alloc] init];
+	NSMenu *main_menu = [[NSMenu alloc] init];
 
 	{
-		NSMenuItem *appMenuItem = [[NSMenuItem alloc] init];
-		[mainMenu addItem:appMenuItem];
+		NSMenuItem *app_menu_item = [[NSMenuItem alloc] init];
+		[main_menu addItem:app_menu_item];
 
-		NSMenu *appMenu = [[NSMenu alloc] init];
-		appMenuItem.submenu = appMenu;
+		NSMenu *app_menu = [[NSMenu alloc] init];
+		app_menu_item.submenu = app_menu;
 
-		NSString *aboutMenuItemTitle = [NSString stringWithFormat:@"About %@", displayName];
-		NSMenuItem *aboutMenuItem =
-		        [[NSMenuItem alloc] initWithTitle:aboutMenuItemTitle
+		NSString *about_menu_item_title =
+		        [NSString stringWithFormat:@"About %@", display_name];
+		NSMenuItem *about_menu_item =
+		        [[NSMenuItem alloc] initWithTitle:about_menu_item_title
 		                                   action:@selector(orderFrontStandardAboutPanel:)
 		                            keyEquivalent:@""];
-		[appMenu addItem:aboutMenuItem];
+		[app_menu addItem:about_menu_item];
 
-		[appMenu addItem:[NSMenuItem separatorItem]];
+		[app_menu addItem:[NSMenuItem separatorItem]];
 
-		NSMenuItem *servicesMenuItem = [[NSMenuItem alloc] initWithTitle:@"Services"
-		                                                          action:nil
-		                                                   keyEquivalent:@""];
-		[appMenu addItem:servicesMenuItem];
+		NSMenuItem *services_menu_item = [[NSMenuItem alloc] initWithTitle:@"Services"
+		                                                            action:nil
+		                                                     keyEquivalent:@""];
+		[app_menu addItem:services_menu_item];
 
-		NSMenu *servicesMenu = [[NSMenu alloc] init];
-		servicesMenuItem.submenu = servicesMenu;
-		NSApp.servicesMenu = servicesMenu;
+		NSMenu *services_menu = [[NSMenu alloc] init];
+		services_menu_item.submenu = services_menu;
+		NSApp.servicesMenu = services_menu;
 
-		[appMenu addItem:[NSMenuItem separatorItem]];
+		[app_menu addItem:[NSMenuItem separatorItem]];
 
-		NSString *hideMenuItemTitle = [NSString stringWithFormat:@"Hide %@", displayName];
-		NSMenuItem *hideMenuItem = [[NSMenuItem alloc] initWithTitle:hideMenuItemTitle
-		                                                      action:@selector(hide:)
-		                                               keyEquivalent:@"h"];
-		[appMenu addItem:hideMenuItem];
+		NSString *hide_menu_item_title =
+		        [NSString stringWithFormat:@"Hide %@", display_name];
+		NSMenuItem *hide_menu_item = [[NSMenuItem alloc] initWithTitle:hide_menu_item_title
+		                                                        action:@selector(hide:)
+		                                                 keyEquivalent:@"h"];
+		[app_menu addItem:hide_menu_item];
 
-		NSMenuItem *hideOthersMenuItem =
+		NSMenuItem *hide_others_menu_item =
 		        [[NSMenuItem alloc] initWithTitle:@"Hide Others"
 		                                   action:@selector(hideOtherApplications:)
 		                            keyEquivalent:@"h"];
-		hideOthersMenuItem.keyEquivalentModifierMask |= NSEventModifierFlagOption;
-		[appMenu addItem:hideOthersMenuItem];
+		hide_others_menu_item.keyEquivalentModifierMask |= NSEventModifierFlagOption;
+		[app_menu addItem:hide_others_menu_item];
 
-		NSMenuItem *showAllMenuItem =
+		NSMenuItem *show_all_menu_item =
 		        [[NSMenuItem alloc] initWithTitle:@"Show All"
 		                                   action:@selector(unhideAllApplications:)
 		                            keyEquivalent:@""];
-		[appMenu addItem:showAllMenuItem];
+		[app_menu addItem:show_all_menu_item];
 
-		[appMenu addItem:[NSMenuItem separatorItem]];
+		[app_menu addItem:[NSMenuItem separatorItem]];
 
-		NSString *quitMenuItemTitle = [NSString stringWithFormat:@"Quit %@", displayName];
-		NSMenuItem *quitMenuItem = [[NSMenuItem alloc] initWithTitle:quitMenuItemTitle
-		                                                      action:@selector(terminate:)
-		                                               keyEquivalent:@"q"];
-		[appMenu addItem:quitMenuItem];
+		NSString *quit_menu_item_title =
+		        [NSString stringWithFormat:@"Quit %@", display_name];
+		NSMenuItem *quit_menu_item = [[NSMenuItem alloc] initWithTitle:quit_menu_item_title
+		                                                        action:@selector(terminate:)
+		                                                 keyEquivalent:@"q"];
+		[app_menu addItem:quit_menu_item];
 	}
 
 	{
-		NSMenuItem *fileMenuItem = [[NSMenuItem alloc] init];
-		[mainMenu addItem:fileMenuItem];
+		NSMenuItem *file_menu_item = [[NSMenuItem alloc] init];
+		[main_menu addItem:file_menu_item];
 
-		NSMenu *fileMenu = [[NSMenu alloc] init];
-		fileMenu.title = @"File";
-		fileMenuItem.submenu = fileMenu;
+		NSMenu *file_menu = [[NSMenu alloc] init];
+		file_menu.title = @"File";
+		file_menu_item.submenu = file_menu;
 
-		NSMenuItem *closeMenuItem =
+		NSMenuItem *close_menu_item =
 		        [[NSMenuItem alloc] initWithTitle:@"Close"
 		                                   action:@selector(performClose:)
 		                            keyEquivalent:@"w"];
-		[fileMenu addItem:closeMenuItem];
+		[file_menu addItem:close_menu_item];
 	}
 
 	{
-		NSMenuItem *viewMenuItem = [[NSMenuItem alloc] init];
-		[mainMenu addItem:viewMenuItem];
+		NSMenuItem *view_menu_item = [[NSMenuItem alloc] init];
+		[main_menu addItem:view_menu_item];
 
-		NSMenu *viewMenu = [[NSMenu alloc] init];
-		viewMenu.title = @"View";
-		viewMenuItem.submenu = viewMenu;
+		NSMenu *view_menu = [[NSMenu alloc] init];
+		view_menu.title = @"View";
+		view_menu_item.submenu = view_menu;
 
-		NSMenuItem *enterFullScreenMenuItem =
+		NSMenuItem *enter_full_screen_menu_item =
 		        [[NSMenuItem alloc] initWithTitle:@"Enter Full Screen"
 		                                   action:@selector(toggleFullScreen:)
 		                            keyEquivalent:@"f"];
-		enterFullScreenMenuItem.keyEquivalentModifierMask |= NSEventModifierFlagControl;
-		[viewMenu addItem:enterFullScreenMenuItem];
+		enter_full_screen_menu_item.keyEquivalentModifierMask |= NSEventModifierFlagControl;
+		[view_menu addItem:enter_full_screen_menu_item];
 	}
 
 	{
-		NSMenuItem *windowMenuItem = [[NSMenuItem alloc] init];
-		[mainMenu addItem:windowMenuItem];
+		NSMenuItem *window_menu_item = [[NSMenuItem alloc] init];
+		[main_menu addItem:window_menu_item];
 
-		NSMenu *windowMenu = [[NSMenu alloc] init];
-		windowMenu.title = @"Window";
-		windowMenuItem.submenu = windowMenu;
+		NSMenu *window_menu = [[NSMenu alloc] init];
+		window_menu.title = @"Window";
+		window_menu_item.submenu = window_menu;
 
-		NSMenuItem *minimizeMenuItem =
+		NSMenuItem *minimize_menu_item =
 		        [[NSMenuItem alloc] initWithTitle:@"Minimize"
 		                                   action:@selector(performMiniaturize:)
 		                            keyEquivalent:@"m"];
-		[windowMenu addItem:minimizeMenuItem];
+		[window_menu addItem:minimize_menu_item];
 
-		NSMenuItem *zoomMenuItem = [[NSMenuItem alloc] initWithTitle:@"Zoom"
-		                                                      action:@selector(performZoom:)
-		                                               keyEquivalent:@""];
-		[windowMenu addItem:zoomMenuItem];
+		NSMenuItem *zoom_menu_item =
+		        [[NSMenuItem alloc] initWithTitle:@"Zoom"
+		                                   action:@selector(performZoom:)
+		                            keyEquivalent:@""];
+		[window_menu addItem:zoom_menu_item];
 
-		[windowMenu addItem:[NSMenuItem separatorItem]];
+		[window_menu addItem:[NSMenuItem separatorItem]];
 
-		NSMenuItem *bringAllToFrontMenuItem =
+		NSMenuItem *bring_all_to_front_menu_item =
 		        [[NSMenuItem alloc] initWithTitle:@"Bring All to Front"
 		                                   action:@selector(arrangeInFront:)
 		                            keyEquivalent:@""];
-		[windowMenu addItem:bringAllToFrontMenuItem];
+		[window_menu addItem:bring_all_to_front_menu_item];
 
-		NSApp.windowsMenu = windowMenu;
+		NSApp.windowsMenu = window_menu;
 	}
 
-	NSApp.mainMenu = mainMenu;
+	NSApp.mainMenu = main_menu;
 }
 
 function NSRect

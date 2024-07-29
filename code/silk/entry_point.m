@@ -98,7 +98,7 @@ typedef struct
 	id<MTLRenderCommandEncoder> encoder =
 	        [command_buffer renderCommandEncoderWithDescriptor:descriptor];
 
-	float scale_factor = (float)self.window.backingScaleFactor;
+	f32 scale_factor = (f32)self.window.backingScaleFactor;
 
 	VertexArguments arguments = {0};
 	arguments.resolution.x = texture.width;

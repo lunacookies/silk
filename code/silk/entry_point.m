@@ -15,7 +15,7 @@ typedef struct
 	f32x2 size;
 } VertexArguments;
 
-@interface MainView : NSView <CALayerDelegate>
+@interface MainView : NSView
 @end
 
 @implementation MainView

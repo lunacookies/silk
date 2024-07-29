@@ -1,10 +1,34 @@
 @import AppKit;
 @import Metal;
-@import simd;
 
 #define function static
 #define global static
 #define local_persist static
+
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
+
+typedef int8_t s8;
+typedef int16_t s16;
+typedef int32_t s32;
+typedef int64_t s64;
+
+typedef ptrdiff_t smm;
+typedef size_t umm;
+
+typedef float f32;
+typedef double f64;
+
+typedef f32 __attribute__((ext_vector_type(2))) f32x2;
+typedef f32 __attribute__((ext_vector_type(3))) f32x3;
+typedef f32 __attribute__((ext_vector_type(4))) f32x4;
+
+#define Breakpoint() (__builtin_debugtrap())
+#define Assert(condition) \
+	if (!(condition)) \
+	Breakpoint()
 
 #define Min(x, y) (((x) < (y)) ? (x) : (y))
 #define Max(x, y) (((x) > (y)) ? (x) : (y))
@@ -16,9 +40,9 @@ CALayer (Private)
 
 typedef struct
 {
-	simd_float2 resolution;
-	simd_float2 position;
-	simd_float2 size;
+	f32x2 resolution;
+	f32x2 position;
+	f32x2 size;
 } VertexArguments;
 
 @interface MainView : NSView <CALayerDelegate>
@@ -32,7 +56,7 @@ typedef struct
 
 	IOSurfaceRef io_surface;
 	id<MTLTexture> texture;
-	simd_float2 mouse_location;
+	f32x2 mouse_location;
 
 	NSTrackingArea *tracking_area;
 }
@@ -77,7 +101,7 @@ typedef struct
 	arguments.resolution.x = texture.width;
 	arguments.resolution.y = texture.height;
 	arguments.position = mouse_location * scale_factor;
-	arguments.size = simd_make_float2(100, 100) * scale_factor;
+	arguments.size = (f32x2){100, 100} * scale_factor;
 
 	[encoder setRenderPipelineState:pipeline_state];
 	[encoder setVertexBytes:&arguments length:sizeof(arguments) atIndex:0];
@@ -95,8 +119,8 @@ typedef struct
 {
 	NSPoint point = event.locationInWindow;
 	point.y = self.frame.size.height - point.y;
-	mouse_location.x = (float)point.x;
-	mouse_location.y = (float)point.y;
+	mouse_location.x = (f32)point.x;
+	mouse_location.y = (f32)point.y;
 	self.needsDisplay = YES;
 	[self.layer setNeedsDisplay];
 }
@@ -141,8 +165,8 @@ typedef struct
 	};
 
 	MTLTextureDescriptor *descriptor = [[MTLTextureDescriptor alloc] init];
-	descriptor.width = (NSUInteger)size.width;
-	descriptor.height = (NSUInteger)size.height;
+	descriptor.width = (umm)size.width;
+	descriptor.height = (umm)size.height;
 	descriptor.usage = MTLTextureUsageRenderTarget;
 	descriptor.pixelFormat = MTLPixelFormatBGRA8Unorm;
 
@@ -324,7 +348,7 @@ typedef struct
 
 @end
 
-int
+s32
 main(void)
 {
 	setenv("MTL_SHADER_VALIDATION", "1", 1);

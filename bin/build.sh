@@ -26,9 +26,9 @@ clang \
 	-Wmissing-prototypes \
 	-Wshadow \
 	-Wstrict-prototypes \
-	-Wno-unused-parameter \
-	code/silk/entry_point.m
+	"code/silk/entry_point.m"
 
 xcrun metal \
 	-o "build/Silk.app/Contents/Resources/default.metallib" \
+	-gline-tables-only -frecord-sources \
 	"code/silk/shaders.metal"

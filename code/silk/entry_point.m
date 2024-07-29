@@ -64,8 +64,6 @@ typedef struct
 - (instancetype)initWithFrame:(NSRect)frame
 {
 	self = [super initWithFrame:frame];
-	self.layer = [CALayer layer];
-	self.layer.delegate = self;
 	self.wantsLayer = YES;
 
 	device = MTLCreateSystemDefaultDevice();
@@ -83,7 +81,12 @@ typedef struct
 	return self;
 }
 
-- (void)displayLayer:(CALayer *)layer
+- (BOOL)wantsUpdateLayer
+{
+	return YES;
+}
+
+- (void)updateLayer
 {
 	id<MTLCommandBuffer> command_buffer = [command_queue commandBuffer];
 
@@ -122,7 +125,6 @@ typedef struct
 	mouse_location.x = (f32)point.x;
 	mouse_location.y = (f32)point.y;
 	self.needsDisplay = YES;
-	[self.layer setNeedsDisplay];
 }
 
 - (void)updateTrackingAreas
@@ -138,19 +140,18 @@ typedef struct
 	[self addTrackingArea:tracking_area];
 }
 
-- (void)layoutSublayersOfLayer:(CALayer *)layer
+- (void)setFrameSize:(NSSize)size
 {
+	[super setFrameSize:size];
 	[self updateIOSurface];
-	[self.layer setNeedsDisplay];
+	self.needsDisplay = YES;
 }
 
 - (void)viewDidChangeBackingProperties
 {
 	[super viewDidChangeBackingProperties];
-
-	self.layer.contentsScale = self.window.backingScaleFactor;
 	[self updateIOSurface];
-	[self.layer setNeedsDisplay];
+	self.needsDisplay = YES;
 }
 
 - (void)updateIOSurface

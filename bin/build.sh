@@ -1,6 +1,8 @@
-#!/bin/sh
+#!/bin/bash
 
 set -e
+
+release_build="$1"
 
 clang-format -i code/**/*.m code/**/*.metal
 
@@ -11,22 +13,34 @@ mkdir -p "build/Silk.app/Contents/Resources"
 
 cp "data/Info.plist" "build/Silk.app/Contents/Info.plist"
 
-clang \
-	-o "build/Silk.app/Contents/MacOS/Silk" \
-	-I code \
-	-fmodules -fobjc-arc \
-	-g3 \
-	-fsanitize=undefined \
-	-W \
-	-Wall \
-	-Wextra \
-	-Wpedantic \
-	-Wconversion \
-	-Wimplicit-fallthrough \
-	-Wmissing-prototypes \
-	-Wshadow \
-	-Wstrict-prototypes \
-	"code/silk/entry_point.m"
+compiler_arguments=()
+
+compiler_arguments+=(-o "build/Silk.app/Contents/MacOS/Silk")
+compiler_arguments+=(-I "code")
+
+if [ "$release_build" ]; then
+	compiler_arguments+=(-Os -fwrapv -fno-strict-aliasing)
+else
+	compiler_arguments+=(-DDEBUG=1 -g3 -fsanitize=undefined)
+fi
+
+compiler_arguments+=(
+	-fmodules
+	-fobjc-arc
+	-W
+	-Wall
+	-Wextra
+	-Wpedantic
+	-Wconversion
+	-Wimplicit-fallthrough
+	-Wmissing-prototypes
+	-Wshadow
+	-Wstrict-prototypes
+)
+
+compiler_arguments+=("code/silk/entry_point.m")
+
+clang "${compiler_arguments[@]}"	
 
 xcrun metal \
 	-o "build/Silk.app/Contents/Resources/default.metallib" \

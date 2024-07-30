@@ -12,6 +12,11 @@ typedef int16_t s16;
 typedef int32_t s32;
 typedef int64_t s64;
 
+typedef u8 b8;
+typedef u16 b16;
+typedef u32 b32;
+typedef u64 b64;
+
 typedef ptrdiff_t smm;
 typedef size_t umm;
 
@@ -23,9 +28,32 @@ typedef f32 __attribute__((ext_vector_type(3))) f32x3;
 typedef f32 __attribute__((ext_vector_type(4))) f32x4;
 
 #define Breakpoint() (__builtin_debugtrap())
-#define Assert(condition) \
+#define Unreachable() Breakpoint()
+#define AssertAlways(condition) \
 	if (!(condition)) \
 	Breakpoint()
 
+#ifdef DEBUG
+#define Assert(condition) AssertAlways(condition)
+#else
+#define Assert(condition) (void)(condition)
+#endif
+
 #define Min(x, y) (((x) < (y)) ? (x) : (y))
 #define Max(x, y) (((x) > (y)) ? (x) : (y))
+
+#define size_of(T) ((smm)sizeof(T))
+#define align_of(T) ((smm)_Alignof(T))
+
+#define SetBitCountU64(x) (__builtin_popcountll(x))
+
+function smm Kibibytes(smm n);
+function smm Mebibytes(smm n);
+
+function umm AlignPow2_(umm base, smm align) __attribute__((unused));
+function smm AlignPadPow2(umm base, smm align);
+
+function void MemorySet(void *dst, u8 byte, smm n);
+function void MemoryZero(void *dst, smm n);
+#define MemoryZeroArray(dst, n) (MemoryZero((dst), (n) * size_of(*(dst))))
+#define MemoryZeroStruct(dst) (MemoryZeroArray((dst), 1))

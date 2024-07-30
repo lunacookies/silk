@@ -1,7 +1,12 @@
 @import AppKit;
+@import Darwin;
 @import Metal;
 
 #include "base/base_include.h"
+#include "os/os.h"
+
+#include "base/base_include.c"
+#include "os/os.c"
 
 @interface
 CALayer (Private)
@@ -29,6 +34,8 @@ typedef struct
 	f32x2 mouse_location;
 
 	NSTrackingArea *tracking_area;
+
+	Arena *frame_arena;
 }
 
 - (instancetype)initWithFrame:(NSRect)frame
@@ -47,6 +54,8 @@ typedef struct
 	descriptor.fragmentFunction = [library newFunctionWithName:@"FragmentMain"];
 
 	pipeline_state = [device newRenderPipelineStateWithDescriptor:descriptor error:nil];
+
+	frame_arena = OS_ArenaAllocDefault();
 
 	return self;
 }
@@ -86,6 +95,8 @@ typedef struct
 	[command_buffer waitUntilCompleted];
 
 	[self.layer setContentsChanged];
+
+	ArenaClear(frame_arena);
 }
 
 - (void)mouseMoved:(NSEvent *)event
@@ -150,6 +161,11 @@ typedef struct
 	texture = [device newTextureWithDescriptor:descriptor iosurface:io_surface plane:0];
 
 	self.layer.contents = (__bridge id)io_surface;
+}
+
+- (void)dealloc
+{
+	ArenaRelease(frame_arena);
 }
 
 @end
@@ -325,6 +341,8 @@ main(void)
 	setenv("MTL_SHADER_VALIDATION", "1", 1);
 	setenv("MTL_DEBUG_LAYER", "1", 1);
 	setenv("MTL_DEBUG_LAYER_WARNING_MODE", "nslog", 1);
+
+	OS_Init();
 
 	[NSApplication sharedApplication];
 	AppDelegate *app_delegate = [[AppDelegate alloc] init];

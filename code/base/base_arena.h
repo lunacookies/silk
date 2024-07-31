@@ -9,7 +9,8 @@ typedef enum
 	PageAllocatorOperation__Count,
 } PageAllocatorOperation;
 
-typedef void *(*PageAllocatorProc)(void *allocator_data, void *ptr, smm size, PageAllocatorOperation operation);
+typedef void *(*PageAllocatorProc)(
+        void *allocator_data, void *ptr, smm size, PageAllocatorOperation operation);
 
 typedef struct PageAllocator PageAllocator;
 struct PageAllocator
@@ -20,7 +21,8 @@ struct PageAllocator
 
 function void *PageAllocatorReserve(PageAllocator allocator, smm size);
 function void PageAllocatorCommit(PageAllocator allocator, void *ptr, smm size);
-function void PageAllocatorDecommit_(PageAllocator allocator, void *ptr, smm size) __attribute__((unused));
+function void PageAllocatorDecommit_(PageAllocator allocator, void *ptr, smm size)
+        __attribute__((unused));
 function void PageAllocatorRelease(PageAllocator allocator, void *ptr, smm size);
 function smm PageAllocatorAlign(PageAllocator allocator);
 

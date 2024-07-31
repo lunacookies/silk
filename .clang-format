@@ -2,7 +2,7 @@ AlignAfterOpenBracket: DontAlign
 AlignEscapedNewlines: DontAlign
 AlignTrailingComments: false
 AllowShortBlocksOnASingleLine: false
-AllowShortCaseLabelsOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
@@ -14,4 +14,6 @@ ContinuationIndentWidth: 8
 IndentCaseLabels: true
 IndentWidth: 8
 InsertNewlineAtEOF: true
+ObjCBlockIndentWidth: 8
+SortIncludes: Never
 UseTab: ForIndentation

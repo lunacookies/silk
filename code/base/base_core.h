@@ -43,7 +43,7 @@ typedef f32 __attribute__((ext_vector_type(4))) f32x4;
 #define Max(x, y) (((x) > (y)) ? (x) : (y))
 
 #define size_of(T) ((smm)sizeof(T))
-#define align_of(T) ((smm)_Alignof(T))
+#define align_of(T) ((smm) _Alignof(T))
 
 #define ArrayCount(a) (size_of(a) / size_of((a)[0]))
 

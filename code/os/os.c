@@ -8,17 +8,18 @@ OS_Init(void)
 
 	{
 		s32 value = 0;
-		umm size =(umm) size_of(s32);
+		umm size = (umm)size_of(s32);
 		s32 code = sysctlbyname("hw.pagesize", &value, &size, NULL, 0);
 		AssertAlways(code == 0);
-		AssertAlways(size ==(umm) size_of(s32));
+		AssertAlways(size == (umm)size_of(s32));
 
 		AssertAlways(value >= 1);
 		AssertAlways(SetBitCountU64((u64)value) == 1);
 		os_hardware_info->page_size = value;
 	}
 
-	AssertAlways(OS_ProtectMemory(os_hardware_info, size_of(OS_HardwareInfo), OS_MemoryProtectionFlag_Read));
+	AssertAlways(OS_ProtectMemory(
+	        os_hardware_info, size_of(OS_HardwareInfo), OS_MemoryProtectionFlag_Read));
 }
 
 function void *
@@ -29,7 +30,8 @@ OS_Reserve(smm size)
 	mach_port_t task = mach_task_self();
 	void *result = 0;
 
-	kern_return_t kr = vm_allocate(task, (vm_address_t *)&result, (vm_size_t)size, VM_FLAGS_ANYWHERE);
+	kern_return_t kr =
+	        vm_allocate(task, (vm_address_t *)&result, (vm_size_t)size, VM_FLAGS_ANYWHERE);
 	if (kr != KERN_SUCCESS)
 	{
 		return 0;
@@ -106,7 +108,7 @@ OS_ProtectMemory(void *ptr, smm size, OS_MemoryProtectionFlags flags)
 
 	mach_port_t task = mach_task_self();
 
-vm_prot_t prot = VM_PROT_NONE;
+	vm_prot_t prot = VM_PROT_NONE;
 
 	if (flags & OS_MemoryProtectionFlag_Read)
 	{
@@ -159,7 +161,8 @@ OS_PageAllocatorProc(void *allocator_data, void *ptr, smm size, PageAllocatorOpe
 			result = (void *)(os_hardware_info->page_size);
 			break;
 
-		default: Unreachable();
+		default:
+			Unreachable();
 	}
 
 	return result;

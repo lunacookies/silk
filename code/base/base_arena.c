@@ -103,13 +103,15 @@ ArenaPush(Arena *arena, smm size, smm align)
 	if (remaining_committed_space < needed_space)
 	{
 		// Round up to the next multiple of the commit increment.
-		smm commit_bytes_needed = (needed_space + arena->commit_increment - 1) / arena->commit_increment * arena->commit_increment;
-		PageAllocatorCommit(arena->allocator, arena->ptr + arena->committed, commit_bytes_needed);
+		smm commit_bytes_needed = (needed_space + arena->commit_increment - 1) /
+		                          arena->commit_increment * arena->commit_increment;
+		PageAllocatorCommit(
+		        arena->allocator, arena->ptr + arena->committed, commit_bytes_needed);
 		arena->committed += commit_bytes_needed;
 	}
 
 	arena->used += padding;
 	void *result = arena->ptr + arena->used;
 	arena->used += size;
-		return result;
+	return result;
 }

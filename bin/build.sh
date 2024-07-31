@@ -4,7 +4,7 @@ set -e
 
 release_build="$1"
 
-clang-format -i code/**/*.m code/**/*.metal
+clang-format -i code/**/*.c code/**/*.h code/**/*.m code/**/*.metal
 
 rm -rf "build"
 

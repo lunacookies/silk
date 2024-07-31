@@ -17,7 +17,7 @@ struct UI_Box
 	f32x2 size;
 };
 
-function void UI_BeginFrame(f32 scale_factor);
+function void UI_BeginFrame(f32 delta_time, f32 scale_factor, f32x2 padding);
 function UI_Box *UI_BoxFromString(String string);
 function void UI_MakeNextCurrent(void);
 function void UI_Pop(void);

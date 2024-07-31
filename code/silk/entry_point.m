@@ -1,6 +1,7 @@
 @import AppKit;
 @import Darwin;
 @import Metal;
+@import QuartzCore;
 
 #include "base/base_include.h"
 #include "os/os.h"
@@ -26,9 +27,12 @@ struct VertexArguments
 };
 
 function void
-BuildUI(f32 scale_factor, f32x2 mouse_location)
+BuildUI(f32 delta_time, f32 scale_factor, f32x2 mouse_location)
 {
-	UI_BeginFrame(scale_factor);
+	D_BeginFrame();
+
+	f32x2 padding = mouse_location / scale_factor;
+	UI_BeginFrame(delta_time, scale_factor, padding);
 
 	UI_MakeNextCurrent();
 	UI_BoxFromString(S("panel"));
@@ -50,7 +54,6 @@ BuildUI(f32 scale_factor, f32x2 mouse_location)
 
 	UI_Pop();
 
-	D_BeginFrame();
 	UI_Draw();
 }
 
@@ -65,8 +68,11 @@ BuildUI(f32 scale_factor, f32x2 mouse_location)
 
 	IOSurfaceRef io_surface;
 	id<MTLTexture> texture;
-	f32x2 mouse_location;
+	CADisplayLink *display_link;
+	b32 just_paused_display_link;
+	f64 last_presentation_timestamp;
 
+	f32x2 mouse_location;
 	NSTrackingArea *tracking_area;
 
 	Arena *frame_arena;
@@ -97,19 +103,36 @@ BuildUI(f32 scale_factor, f32x2 mouse_location)
 
 	pipeline_state = [device newRenderPipelineStateWithDescriptor:descriptor error:nil];
 
+	display_link = [self displayLinkWithTarget:self
+	                                  selector:@selector(displayLinkDidRequestFrame)];
+	display_link.paused = YES;
+	just_paused_display_link = 1;
+
+	[display_link addToRunLoop:NSRunLoop.mainRunLoop forMode:NSRunLoopCommonModes];
+
 	frame_arena = OS_ArenaAllocDefault();
 
 	return self;
 }
 
-- (BOOL)wantsUpdateLayer
+- (void)displayLinkDidRequestFrame
 {
-	return YES;
-}
+	f64 next_presentation_timestamp = display_link.targetTimestamp;
+	f64 delta_time = next_presentation_timestamp - last_presentation_timestamp;
 
-- (void)updateLayer
-{
-	BuildUI((f32)self.window.backingScaleFactor, mouse_location);
+	if (just_paused_display_link)
+	{
+		delta_time = 0;
+		just_paused_display_link = 0;
+	}
+
+	BuildUI((f32)delta_time, (f32)self.window.backingScaleFactor, mouse_location);
+
+	display_link.paused = !d_state.wants_frame;
+	if (display_link.paused)
+	{
+		just_paused_display_link = 1;
+	}
 
 	id<MTLCommandBuffer> command_buffer = [command_queue commandBuffer];
 
@@ -142,10 +165,10 @@ BuildUI(f32 scale_factor, f32x2 mouse_location)
 
 	[command_buffer commit];
 	[command_buffer waitUntilCompleted];
-
 	[self.layer setContentsChanged];
 
 	ArenaClear(frame_arena);
+	last_presentation_timestamp = next_presentation_timestamp;
 }
 
 - (void)mouseMoved:(NSEvent *)event
@@ -155,7 +178,7 @@ BuildUI(f32 scale_factor, f32x2 mouse_location)
 	point = [self convertPointToBacking:point];
 	mouse_location.x = (f32)point.x;
 	mouse_location.y = (f32)point.y;
-	self.needsDisplay = YES;
+	display_link.paused = NO;
 }
 
 - (void)updateTrackingAreas
@@ -175,14 +198,14 @@ BuildUI(f32 scale_factor, f32x2 mouse_location)
 {
 	[super setFrameSize:size];
 	[self updateIOSurface];
-	self.needsDisplay = YES;
+	display_link.paused = NO;
 }
 
 - (void)viewDidChangeBackingProperties
 {
 	[super viewDidChangeBackingProperties];
 	[self updateIOSurface];
-	self.needsDisplay = YES;
+	display_link.paused = NO;
 }
 
 - (void)updateIOSurface

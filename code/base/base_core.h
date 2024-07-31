@@ -12,10 +12,10 @@ typedef int16_t s16;
 typedef int32_t s32;
 typedef int64_t s64;
 
-typedef u8 b8;
-typedef u16 b16;
-typedef u32 b32;
-typedef u64 b64;
+typedef s8 b8;
+typedef s16 b16;
+typedef s32 b32;
+typedef s64 b64;
 
 typedef ptrdiff_t smm;
 typedef size_t umm;
@@ -26,6 +26,10 @@ typedef double f64;
 typedef f32 __attribute__((ext_vector_type(2))) f32x2;
 typedef f32 __attribute__((ext_vector_type(3))) f32x3;
 typedef f32 __attribute__((ext_vector_type(4))) f32x4;
+
+typedef b32 __attribute__((ext_vector_type(2))) b32x2;
+typedef b32 __attribute__((ext_vector_type(3))) b32x3;
+typedef b32 __attribute__((ext_vector_type(4))) b32x4;
 
 #define Breakpoint() (__builtin_debugtrap())
 #define Unreachable() Breakpoint()
@@ -49,6 +53,10 @@ typedef f32 __attribute__((ext_vector_type(4))) f32x4;
 
 #define SetBitCountU64(x) (__builtin_popcountll(x))
 #define RotateLeft64(x, y) (__builtin_rotateleft64((x), (y)))
+
+function f32 Pow(f32 base, f32 exponent);
+function f32x2 Abs(f32x2 v);
+function b32 All(b32x2 v);
 
 function smm Kibibytes(smm n);
 function smm Mebibytes(smm n);

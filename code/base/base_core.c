@@ -1,3 +1,26 @@
+function f32
+Pow(f32 base, f32 exponent)
+{
+	f32 result = powf(base, exponent);
+	return result;
+}
+
+function f32x2
+Abs(f32x2 v)
+{
+	f32x2 result = {0};
+	result[0] = fabsf(v[0]);
+	result[1] = fabsf(v[1]);
+	return result;
+}
+
+function b32
+All(b32x2 v)
+{
+	b32 result = v[0] && v[1];
+	return result;
+}
+
 function smm
 Kibibytes(smm n)
 {

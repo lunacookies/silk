@@ -13,6 +13,12 @@ D_BeginFrame(void)
 }
 
 function void
+D_RequestFrame(void)
+{
+	d_state.wants_frame = 1;
+}
+
+function void
 D_Rect(f32x2 origin, f32x2 size, f32x4 fill)
 {
 	AssertAlways(d_state.rectangle_count < ArrayCount(d_state.rectangles));

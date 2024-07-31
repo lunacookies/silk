@@ -6,12 +6,14 @@ struct UI_State
 	UI_Box *current;
 	b32 next_current;
 	f32 scale_factor;
+	f32x2 padding_target;
+	f32x2 padding;
 };
 
 global UI_State ui_state;
 
 function void
-UI_BeginFrame(f32 scale_factor)
+UI_BeginFrame(f32 delta_time, f32 scale_factor, f32x2 padding)
 {
 	Arena *arena = ui_state.arena;
 	if (arena == 0)
@@ -20,10 +22,28 @@ UI_BeginFrame(f32 scale_factor)
 	}
 
 	ArenaClear(arena);
-	MemoryZeroStruct(&ui_state);
 	ui_state.arena = arena;
 
+	ui_state.root = 0;
+	ui_state.current = 0;
+	ui_state.next_current = 0;
+
 	ui_state.scale_factor = scale_factor;
+	ui_state.padding_target = scale_factor * padding;
+
+	f32x2 padding_delta = ui_state.padding_target - ui_state.padding;
+
+	if (All(Abs(padding_delta) < 0.1f))
+	{
+		ui_state.padding = ui_state.padding_target;
+	}
+	else
+	{
+		f32 speed = 40;
+		f32 rate = 1 - Pow(2, -speed * delta_time);
+		ui_state.padding += rate * padding_delta;
+		D_RequestFrame();
+	}
 }
 
 function UI_Key
@@ -100,20 +120,19 @@ UI_BoxLayout(UI_Box *box, f32x2 *cursor)
 {
 	box->origin = *cursor;
 
-	f32x2 padding = (f32x2){50, 25} * ui_state.scale_factor;
-	*cursor += padding;
+	*cursor += ui_state.padding;
 
 	f32 widest = 0;
 	for (UI_Box *child = box->first; child != 0; child = child->next)
 	{
 		UI_BoxLayout(child, cursor);
 		widest = Max(widest, child->size.x);
-		cursor->y += padding.y;
+		cursor->y += ui_state.padding.y;
 	}
 
-	cursor->x -= padding.x;
+	cursor->x -= ui_state.padding.x;
 
-	box->size.x = padding.x * 2 + widest;
+	box->size.x = ui_state.padding.x * 2 + widest;
 	box->size.y = cursor->y - box->origin.y;
 }
 

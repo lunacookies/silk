@@ -12,6 +12,8 @@ struct D_State
 	Arena *arena;
 	smm arena_frame_start_pos;
 
+	b32 wants_frame;
+
 	D_Rectangle rectangles[1024];
 	smm rectangle_count;
 };
@@ -19,4 +21,5 @@ struct D_State
 global D_State d_state;
 
 function void D_BeginFrame(void);
+function void D_RequestFrame(void);
 function void D_Rect(f32x2 origin, f32x2 size, f32x4 fill);

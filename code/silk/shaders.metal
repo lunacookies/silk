@@ -4,32 +4,38 @@ using namespace metal;
 struct VertexArguments
 {
 	float2 resolution;
-	float2 position;
+};
+
+struct Rectangle
+{
+	float2 origin;
 	float2 size;
+	float4 fill;
 };
 
 struct RasterizerData
 {
 	float4 position [[position]];
-	float4 color;
+	uint instance_id;
 };
 
 constant float2 positions[] = {
-        float2(0, -0.5),
-        float2(-0.5, 0.5),
-        float2(0.5, 0.5),
-};
-
-constant float4 colors[] = {
-        float4(1, 0, 0, 1),
-        float4(0, 1, 0, 1),
-        float4(0, 0, 1, 1),
+        float2(0, 0),
+        float2(1, 0),
+        float2(0, 1),
+        float2(0, 1),
+        float2(1, 1),
+        float2(1, 0),
 };
 
 vertex RasterizerData
-VertexMain(uint vertex_id [[vertex_id]], constant VertexArguments &arguments)
+VertexMain(uint vertex_id [[vertex_id]],
+        uint instance_id [[instance_id]],
+        constant VertexArguments &arguments,
+        device const Rectangle *rectangles)
 {
-	float2 vertex_position = arguments.position + arguments.size * positions[vertex_id];
+	Rectangle rect = rectangles[instance_id];
+	float2 vertex_position = rect.origin + rect.size * positions[vertex_id];
 
 	float4 vertex_position_ndc = float4(0, 0, 0, 1);
 	vertex_position_ndc.xy = 2 * (vertex_position / arguments.resolution) - 1;
@@ -37,12 +43,13 @@ VertexMain(uint vertex_id [[vertex_id]], constant VertexArguments &arguments)
 
 	RasterizerData output = {};
 	output.position = vertex_position_ndc;
-	output.color = colors[vertex_id];
+	output.instance_id = instance_id;
 	return output;
 }
 
 fragment float4
-FragmentMain(RasterizerData input [[stage_in]])
+FragmentMain(RasterizerData input [[stage_in]], device const Rectangle *rectangles)
 {
-	return input.color;
+	Rectangle rect = rectangles[input.instance_id];
+	return rect.fill;
 }

@@ -45,6 +45,8 @@ typedef f32 __attribute__((ext_vector_type(4))) f32x4;
 #define size_of(T) ((smm)sizeof(T))
 #define align_of(T) ((smm)_Alignof(T))
 
+#define ArrayCount(a) (size_of(a) / size_of((a)[0]))
+
 #define SetBitCountU64(x) (__builtin_popcountll(x))
 
 function smm Kibibytes(smm n);

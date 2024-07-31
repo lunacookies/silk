@@ -3,9 +3,11 @@
 @import Metal;
 
 #include "base/base_include.h"
+#include "draw/draw.h"
 #include "os/os.h"
 
 #include "base/base_include.c"
+#include "draw/draw.c"
 #include "os/os.c"
 
 @interface
@@ -13,12 +15,23 @@ CALayer (Private)
 - (void)setContentsChanged;
 @end
 
-typedef struct
+typedef struct VertexArguments VertexArguments;
+struct VertexArguments
 {
 	f32x2 resolution;
 	f32x2 position;
 	f32x2 size;
-} VertexArguments;
+};
+
+function void
+Draw(f32 scale_factor, f32x2 mouse_location)
+{
+	D_BeginFrame();
+
+	f32x2 size = (f32x2){50, 50} * scale_factor;
+	D_Rect(mouse_location, size, (f32x4){1, 0, 0, 1});
+	D_Rect(mouse_location + (f32x2){200, 100} * scale_factor, size * 0.5f, (f32x4){0, 1, 0, 1});
+}
 
 @interface MainView : NSView
 @end
@@ -67,6 +80,8 @@ typedef struct
 
 - (void)updateLayer
 {
+	Draw((f32)self.window.backingScaleFactor, mouse_location);
+
 	id<MTLCommandBuffer> command_buffer = [command_queue commandBuffer];
 
 	MTLRenderPassDescriptor *descriptor = [[MTLRenderPassDescriptor alloc] init];
@@ -77,17 +92,22 @@ typedef struct
 	id<MTLRenderCommandEncoder> encoder =
 	        [command_buffer renderCommandEncoderWithDescriptor:descriptor];
 
-	f32 scale_factor = (f32)self.window.backingScaleFactor;
-
 	VertexArguments arguments = {0};
 	arguments.resolution.x = texture.width;
 	arguments.resolution.y = texture.height;
-	arguments.position = mouse_location * scale_factor;
-	arguments.size = (f32x2){100, 100} * scale_factor;
 
 	[encoder setRenderPipelineState:pipeline_state];
+
 	[encoder setVertexBytes:&arguments length:sizeof(arguments) atIndex:0];
-	[encoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:3];
+
+	umm length = (umm)(size_of(D_Rectangle) * d_state.rectangle_count);
+	[encoder setVertexBytes:&d_state.rectangles length:length atIndex:1];
+	[encoder setFragmentBytes:&d_state.rectangles length:length atIndex:0];
+
+	[encoder drawPrimitives:MTLPrimitiveTypeTriangle
+	            vertexStart:0
+	            vertexCount:6
+	          instanceCount:(umm)d_state.rectangle_count];
 
 	[encoder endEncoding];
 
@@ -103,6 +123,7 @@ typedef struct
 {
 	NSPoint point = event.locationInWindow;
 	point.y = self.frame.size.height - point.y;
+	point = [self convertPointToBacking:point];
 	mouse_location.x = (f32)point.x;
 	mouse_location.y = (f32)point.y;
 	self.needsDisplay = YES;

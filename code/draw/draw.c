@@ -2,7 +2,7 @@ function void
 D_BeginFrame(void)
 {
 	Arena *arena = d_state.arena;
-	if (d_state.arena == 0)
+	if (arena == 0)
 	{
 		arena = OS_ArenaAllocDefault();
 	}

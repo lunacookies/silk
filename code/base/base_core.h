@@ -48,6 +48,7 @@ typedef f32 __attribute__((ext_vector_type(4))) f32x4;
 #define ArrayCount(a) (size_of(a) / size_of((a)[0]))
 
 #define SetBitCountU64(x) (__builtin_popcountll(x))
+#define RotateLeft64(x, y) (__builtin_rotateleft64((x), (y)))
 
 function smm Kibibytes(smm n);
 function smm Mebibytes(smm n);

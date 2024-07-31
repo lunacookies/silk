@@ -3,12 +3,14 @@
 @import Metal;
 
 #include "base/base_include.h"
-#include "draw/draw.h"
 #include "os/os.h"
+#include "draw/draw.h"
+#include "ui/ui.h"
 
 #include "base/base_include.c"
-#include "draw/draw.c"
 #include "os/os.c"
+#include "draw/draw.c"
+#include "ui/ui.c"
 
 @interface
 CALayer (Private)
@@ -24,13 +26,32 @@ struct VertexArguments
 };
 
 function void
-Draw(f32 scale_factor, f32x2 mouse_location)
+BuildUI(f32 scale_factor, f32x2 mouse_location)
 {
-	D_BeginFrame();
+	UI_BeginFrame(scale_factor);
 
-	f32x2 size = (f32x2){50, 50} * scale_factor;
-	D_Rect(mouse_location, size, (f32x4){1, 0, 0, 1});
-	D_Rect(mouse_location + (f32x2){200, 100} * scale_factor, size * 0.5f, (f32x4){0, 1, 0, 1});
+	UI_MakeNextCurrent();
+	UI_BoxFromString(S("panel"));
+
+	{
+		UI_MakeNextCurrent();
+		UI_BoxFromString(S("foo1"));
+
+		{
+			UI_BoxFromString(S("foo1"));
+			UI_BoxFromString(S("foo2"));
+		}
+
+		UI_Pop();
+
+		UI_BoxFromString(S("foo2"));
+		UI_BoxFromString(S("foo3"));
+	}
+
+	UI_Pop();
+
+	D_BeginFrame();
+	UI_Draw();
 }
 
 @interface MainView : NSView
@@ -66,6 +87,14 @@ Draw(f32 scale_factor, f32x2 mouse_location)
 	descriptor.vertexFunction = [library newFunctionWithName:@"VertexMain"];
 	descriptor.fragmentFunction = [library newFunctionWithName:@"FragmentMain"];
 
+	descriptor.colorAttachments[0].blendingEnabled = YES;
+	descriptor.colorAttachments[0].destinationRGBBlendFactor =
+	        MTLBlendFactorOneMinusSourceAlpha;
+	descriptor.colorAttachments[0].destinationAlphaBlendFactor =
+	        MTLBlendFactorOneMinusSourceAlpha;
+	descriptor.colorAttachments[0].sourceRGBBlendFactor = MTLBlendFactorOne;
+	descriptor.colorAttachments[0].sourceAlphaBlendFactor = MTLBlendFactorOne;
+
 	pipeline_state = [device newRenderPipelineStateWithDescriptor:descriptor error:nil];
 
 	frame_arena = OS_ArenaAllocDefault();
@@ -80,7 +109,7 @@ Draw(f32 scale_factor, f32x2 mouse_location)
 
 - (void)updateLayer
 {
-	Draw((f32)self.window.backingScaleFactor, mouse_location);
+	BuildUI((f32)self.window.backingScaleFactor, mouse_location);
 
 	id<MTLCommandBuffer> command_buffer = [command_queue commandBuffer];
 

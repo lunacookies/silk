@@ -51,5 +51,7 @@ fragment float4
 FragmentMain(RasterizerData input [[stage_in]], device const Rectangle *rectangles)
 {
 	Rectangle rect = rectangles[input.instance_id];
-	return rect.fill;
+	float4 result = rect.fill;
+	result.rgb *= result.a;
+	return result;
 }

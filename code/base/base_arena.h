@@ -43,5 +43,5 @@ function void ArenaRelease(Arena *arena);
 function void ArenaClear(Arena *arena);
 function void *ArenaPush(Arena *arena, smm size, smm align);
 
-#define PushArray(arena, T, count) (ArenaPush((arena), size_of(T) * (count), align_of(T)))
+#define PushArray(arena, T, count) ((T *)ArenaPush((arena), size_of(T) * (count), align_of(T)))
 #define PushStruct(arena, T) (PushArray((arena), T, 1))

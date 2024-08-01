@@ -27,7 +27,7 @@ struct VertexArguments
 };
 
 function void
-BuildUI(f32 delta_time, f32 scale_factor, f32x2 mouse_location)
+BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor, f32x2 mouse_location)
 {
 	D_BeginFrame();
 
@@ -48,8 +48,11 @@ BuildUI(f32 delta_time, f32 scale_factor, f32x2 mouse_location)
 
 		UI_Pop();
 
-		UI_BoxFromString(S("foo2"));
-		UI_BoxFromString(S("foo3"));
+		for (smm i = 0; i < 20; i++)
+		{
+			String key = PushStringF(frame_arena, "item%ti", i);
+			UI_BoxFromString(key);
+		}
 	}
 
 	UI_Pop();
@@ -126,7 +129,7 @@ BuildUI(f32 delta_time, f32 scale_factor, f32x2 mouse_location)
 		just_paused_display_link = 0;
 	}
 
-	BuildUI((f32)delta_time, (f32)self.window.backingScaleFactor, mouse_location);
+	BuildUI(frame_arena, (f32)delta_time, (f32)self.window.backingScaleFactor, mouse_location);
 
 	display_link.paused = !d_state.wants_frame;
 	if (display_link.paused)

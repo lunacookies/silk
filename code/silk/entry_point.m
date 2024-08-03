@@ -26,48 +26,59 @@ struct Arguments
 };
 
 function void
-BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor, f32x2 mouse_location)
+B(String string)
+{
+	UI_Box *b = UI_BoxFromString(string);
+	UI_Signal signal = UI_SignalFromBox(b);
+	if (UI_Pressed(signal))
+	{
+		b->background_color = (f32x4){0.5f, 0.5f, 1, 1};
+		b->foreground_color = (f32x4){1, 1, 1, 1};
+	}
+	else if (UI_Hovered(signal))
+	{
+		b->background_color = (f32x4){0, 0, 1, 1};
+		b->foreground_color = (f32x4){1, 1, 1, 1};
+	}
+	else
+	{
+		b->background_color = (f32x4){1, 1, 1, 0.5f};
+		b->foreground_color = (f32x4){0, 0, 0, 1};
+	}
+}
+
+function void
+BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor)
 {
 	D_BeginFrame();
 
-	f32x2 padding = mouse_location / scale_factor;
+	f32x2 padding = (f32x2){50, 25};
 	UI_BeginFrame(delta_time, scale_factor, padding);
 
 	UI_MakeNextCurrent();
-	UI_Box *b = UI_BoxFromString(S("panel"));
-	b->background_color = (f32x4){1, 1, 1, 0.5f};
-	b->foreground_color = (f32x4){0, 0, 0, 1};
+	B(S("panel"));
 
 	{
 		UI_MakeNextCurrent();
-		b = UI_BoxFromString(S("foo1"));
-		b->background_color = (f32x4){1, 1, 1, 0.5f};
-		b->foreground_color = (f32x4){0, 0, 0, 1};
+		B(S("foo1"));
 
 		{
-			b = UI_BoxFromString(S("foo1"));
-			b->background_color = (f32x4){1, 1, 1, 0.5f};
-			b->foreground_color = (f32x4){0, 0, 0, 1};
-
-			b = UI_BoxFromString(S("foo2"));
-			b->background_color = (f32x4){1, 1, 1, 0.5f};
-			b->foreground_color = (f32x4){0, 0, 0, 1};
+			B(S("foo1"));
+			B(S("foo2"));
 		}
 
 		UI_Pop();
 
 		for (smm i = 0; i < 20; i++)
 		{
-			String key = PushStringF(frame_arena, "item%ti", i);
-			b = UI_BoxFromString(key);
-			b->background_color = (f32x4){1, 1, 1, 0.5f};
-			b->foreground_color = (f32x4){0, 0, 0, 1};
+			B(PushStringF(frame_arena, "item%ti", i));
 		}
 	}
 
 	UI_Pop();
 
 	UI_Draw();
+	UI_EndFrame();
 }
 
 @interface MainView : NSView
@@ -85,7 +96,6 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor, f32x2 mouse_locati
 	b32 just_paused_display_link;
 	f64 last_presentation_timestamp;
 
-	f32x2 mouse_location;
 	NSTrackingArea *tracking_area;
 
 	id<MTLBuffer> rectangles_buffer;
@@ -145,7 +155,7 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor, f32x2 mouse_locati
 		just_paused_display_link = 0;
 	}
 
-	BuildUI(frame_arena, (f32)delta_time, (f32)self.window.backingScaleFactor, mouse_location);
+	BuildUI(frame_arena, (f32)delta_time, (f32)self.window.backingScaleFactor);
 
 	Assert(IsAligned((umm)rectangles_buffer.contents, align_of(D_Rectangle)));
 	AssertAlways((smm)d_state.rectangle_count * size_of(D_Rectangle) <=
@@ -198,13 +208,68 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor, f32x2 mouse_locati
 	last_presentation_timestamp = next_presentation_timestamp;
 }
 
-- (void)mouseMoved:(NSEvent *)event
+- (void)mouseEntered:(NSEvent *)ns_event
 {
-	NSPoint point = event.locationInWindow;
+	NSPoint point = ns_event.locationInWindow;
 	point.y = self.frame.size.height - point.y;
 	point = [self convertPointToBacking:point];
-	mouse_location.x = (f32)point.x;
-	mouse_location.y = (f32)point.y;
+
+	UI_Event event = {0};
+	event.kind = UI_EventKind_MouseEntered;
+	event.origin.x = (f32)point.x;
+	event.origin.y = (f32)point.y;
+	display_link.paused = NO;
+}
+
+- (void)mouseExited:(NSEvent *)ns_event
+{
+	UI_Event event = {0};
+	event.kind = UI_EventKind_MouseExited;
+	display_link.paused = NO;
+}
+
+- (void)mouseMoved:(NSEvent *)ns_event
+{
+	NSPoint point = ns_event.locationInWindow;
+	point.y = self.frame.size.height - point.y;
+	point = [self convertPointToBacking:point];
+
+	UI_Event event = {0};
+	event.kind = UI_EventKind_MouseMoved;
+	event.origin.x = (f32)point.x;
+	event.origin.y = (f32)point.y;
+	UI_EnqueueEvent(event);
+
+	display_link.paused = NO;
+}
+
+- (void)mouseDown:(NSEvent *)ns_event
+{
+	NSPoint point = ns_event.locationInWindow;
+	point.y = self.frame.size.height - point.y;
+	point = [self convertPointToBacking:point];
+
+	UI_Event event = {0};
+	event.kind = UI_EventKind_MouseDown;
+	event.origin.x = (f32)point.x;
+	event.origin.y = (f32)point.y;
+	UI_EnqueueEvent(event);
+
+	display_link.paused = NO;
+}
+
+- (void)mouseUp:(NSEvent *)ns_event
+{
+	NSPoint point = ns_event.locationInWindow;
+	point.y = self.frame.size.height - point.y;
+	point = [self convertPointToBacking:point];
+
+	UI_Event event = {0};
+	event.kind = UI_EventKind_MouseUp;
+	event.origin.x = (f32)point.x;
+	event.origin.y = (f32)point.y;
+	UI_EnqueueEvent(event);
+
 	display_link.paused = NO;
 }
 
@@ -215,7 +280,8 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor, f32x2 mouse_locati
 	[self removeTrackingArea:tracking_area];
 	tracking_area =
 	        [[NSTrackingArea alloc] initWithRect:self.bounds
-	                                     options:NSTrackingActiveAlways | NSTrackingMouseMoved
+	                                     options:NSTrackingActiveAlways | NSTrackingMouseMoved |
+	                                             NSTrackingMouseEnteredAndExited
 	                                       owner:self
 	                                    userInfo:nil];
 	[self addTrackingArea:tracking_area];

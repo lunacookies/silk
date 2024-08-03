@@ -5,6 +5,13 @@ struct UI_BoxSlot
 	UI_Box *last;
 };
 
+typedef struct UI_EventNode UI_EventNode;
+struct UI_EventNode
+{
+	UI_EventNode *next;
+	UI_Event event;
+};
+
 typedef struct UI_State UI_State;
 struct UI_State
 {
@@ -14,6 +21,10 @@ struct UI_State
 	UI_Box *root;
 	UI_Box *current;
 	b32 next_current;
+
+	Arena *frame_arena;
+	UI_EventNode *first_event_node;
+	UI_EventNode *last_event_node;
 
 	f32 scale_factor;
 	f32x2 padding_target;
@@ -30,6 +41,11 @@ UI_BeginFrame(f32 delta_time, f32 scale_factor, f32x2 padding)
 		ui_state.arena = OS_ArenaAllocDefault();
 		ui_state.slot_count = 128;
 		ui_state.slots = PushArray(ui_state.arena, UI_BoxSlot, ui_state.slot_count);
+	}
+
+	if (ui_state.frame_arena == 0)
+	{
+		ui_state.frame_arena = OS_ArenaAllocDefault();
 	}
 
 	ui_state.root = 0;
@@ -52,6 +68,31 @@ UI_BeginFrame(f32 delta_time, f32 scale_factor, f32x2 padding)
 		ui_state.padding += rate * padding_delta;
 		D_RequestFrame();
 	}
+}
+
+function void
+UI_EndFrame(void)
+{
+	ArenaClear(ui_state.frame_arena);
+	ui_state.first_event_node = 0;
+	ui_state.last_event_node = 0;
+}
+
+function void
+UI_EnqueueEvent(UI_Event event)
+{
+	UI_EventNode *node = PushStruct(ui_state.frame_arena, UI_EventNode);
+	node->event = event;
+
+	if (ui_state.first_event_node == 0)
+	{
+		ui_state.first_event_node = node;
+	}
+	else
+	{
+		ui_state.last_event_node->next = node;
+	}
+	ui_state.last_event_node = node;
 }
 
 function UI_Key
@@ -144,6 +185,77 @@ UI_BoxFromString(String string)
 	}
 
 	return box;
+}
+
+function UI_Signal
+UI_SignalFromBox(UI_Box *box)
+{
+	f32x2 p0 = box->origin;
+	f32x2 p1 = box->origin + box->size;
+
+	UI_Signal signal = {0};
+
+	for (UI_EventNode *node = ui_state.first_event_node; node != 0; node = node->next)
+	{
+		UI_Event *event = &node->event;
+
+		if (event->kind == UI_EventKind_MouseExited)
+		{
+			signal.flags &= ~UI_SignalFlag_Hovered;
+			signal.flags &= ~UI_SignalFlag_Pressed;
+			continue;
+		}
+
+		b32 in_bounds = All(p0 <= event->origin) && All(event->origin < p1);
+		if (!in_bounds)
+		{
+			continue;
+		}
+
+		switch (event->kind)
+		{
+			case UI_EventKind_MouseEntered:
+			case UI_EventKind_MouseMoved:
+				signal.flags |= UI_SignalFlag_Hovered;
+				break;
+
+			case UI_EventKind_MouseDown:
+				signal.flags |= UI_SignalFlag_Hovered;
+				signal.flags |= UI_SignalFlag_Pressed;
+				break;
+
+			case UI_EventKind_MouseUp:
+				signal.flags |= UI_SignalFlag_Hovered;
+				signal.flags |= UI_SignalFlag_Released;
+				break;
+
+			default:
+				Unreachable();
+		}
+	}
+
+	return signal;
+}
+
+function b32
+UI_Hovered(UI_Signal signal)
+{
+	b32 result = signal.flags & UI_SignalFlag_Hovered;
+	return result;
+}
+
+function b32
+UI_Pressed(UI_Signal signal)
+{
+	b32 result = signal.flags & UI_SignalFlag_Pressed;
+	return result;
+}
+
+function b32
+UI_Released_(UI_Signal signal)
+{
+	b32 result = signal.flags & UI_SignalFlag_Released;
+	return result;
 }
 
 function void

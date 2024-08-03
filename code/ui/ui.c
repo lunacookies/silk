@@ -26,8 +26,8 @@ struct UI_State
 	UI_EventNode *first_event_node;
 	UI_EventNode *last_event_node;
 
+	f32 delta_time;
 	f32 scale_factor;
-	f32x2 padding_target;
 	f32x2 padding;
 };
 
@@ -52,22 +52,9 @@ UI_BeginFrame(f32 delta_time, f32 scale_factor, f32x2 padding)
 	ui_state.current = 0;
 	ui_state.next_current = 0;
 
+	ui_state.delta_time = delta_time;
 	ui_state.scale_factor = scale_factor;
-	ui_state.padding_target = scale_factor * padding;
-
-	f32x2 padding_delta = ui_state.padding_target - ui_state.padding;
-
-	if (All(Abs(padding_delta) < 0.1f))
-	{
-		ui_state.padding = ui_state.padding_target;
-	}
-	else
-	{
-		f32 speed = 40;
-		f32 rate = 1 - Pow(2, -speed * delta_time);
-		ui_state.padding += rate * padding_delta;
-		D_RequestFrame();
-	}
+	ui_state.padding = scale_factor * padding;
 }
 
 function void
@@ -297,6 +284,24 @@ UI_TextDraw(String text, f32x2 origin, f32x4 color)
 }
 
 function void
+UI_StepAnimation(f32x2 *actual, f32x2 target, f32x2 epsilon)
+{
+	f32x2 delta = target - *actual;
+
+	if (All(Abs(delta) < epsilon))
+	{
+		*actual = target;
+	}
+	else
+	{
+		f32 speed = 30;
+		f32 rate = 1 - Pow(2, -speed * ui_state.delta_time);
+		*actual += rate * delta;
+		D_RequestFrame();
+	}
+}
+
+function void
 UI_BoxLayout(UI_Box *box)
 {
 	f32x2 cursor = ui_state.padding;
@@ -305,13 +310,16 @@ UI_BoxLayout(UI_Box *box)
 	for (UI_Box *child = box->first; child != 0; child = child->next)
 	{
 		UI_BoxLayout(child);
-		child->origin = cursor;
-		min_size = Max(min_size, child->size);
-		cursor.y += child->size.y + ui_state.padding.y;
+		child->origin_target = cursor;
+		min_size = Max(min_size, child->size_target);
+		cursor.y += child->size_target.y + ui_state.padding.y;
 	}
 
-	box->size.x = ui_state.padding.x * 2 + min_size.x;
-	box->size.y = Max(cursor.y, ui_state.padding.y * 2 + min_size.y);
+	box->size_target.x = ui_state.padding.x * 2 + min_size.x;
+	box->size_target.y = Max(cursor.y, ui_state.padding.y * 2 + min_size.y);
+
+	UI_StepAnimation(&box->origin, box->origin_target, 0.1f);
+	UI_StepAnimation(&box->size, box->size_target, 0.1f);
 }
 
 function void

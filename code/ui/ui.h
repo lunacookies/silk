@@ -21,6 +21,9 @@ struct UI_Box
 	f32x2 origin_absolute;
 	f32x2 size;
 
+	f32x2 origin_target;
+	f32x2 size_target;
+
 	String string;
 };
 

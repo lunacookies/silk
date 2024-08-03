@@ -92,6 +92,16 @@ AlignPadPow2(umm base, smm align)
 	return result;
 }
 
+function b32
+IsAligned(umm base, smm align)
+{
+	Assert(align >= 1);
+	Assert(SetBitCount((u64)align) == 1);
+	umm mask = (umm)align - 1;
+	b32 result = (base & mask) == 0;
+	return result;
+}
+
 function void
 MemoryCopy(void *dst, void *src, smm n)
 {

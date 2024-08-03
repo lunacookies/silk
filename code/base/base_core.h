@@ -61,6 +61,7 @@ function smm Mebibytes(smm n);
 
 function umm AlignPow2_(umm base, smm align) __attribute__((unused));
 function smm AlignPadPow2(umm base, smm align);
+function b32 IsAligned(umm base, smm align);
 
 function void MemoryCopy(void *dst, void *src, smm n);
 #define MemoryCopyArray(dst, src, n) \

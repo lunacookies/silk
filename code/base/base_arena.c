@@ -3,7 +3,7 @@ PageAllocatorReserve(PageAllocator allocator, smm size)
 {
 	Assert(size >= 0);
 	void *result = allocator.proc(allocator.data, 0, size, PageAllocatorOperation_Reserve);
-	Assert(AlignPadPow2((umm)result, PageAllocatorAlign(allocator)) == 0);
+	Assert(IsAligned((umm)result, PageAllocatorAlign(allocator)));
 	return result;
 }
 
@@ -11,7 +11,7 @@ function void
 PageAllocatorCommit(PageAllocator allocator, void *ptr, smm size)
 {
 	Assert(size >= 0);
-	Assert(AlignPadPow2((umm)ptr, PageAllocatorAlign(allocator)) == 0);
+	Assert(IsAligned((umm)ptr, PageAllocatorAlign(allocator)));
 	void *p = allocator.proc(allocator.data, ptr, size, PageAllocatorOperation_Commit);
 	Assert(p == 0);
 }
@@ -20,7 +20,7 @@ function void
 PageAllocatorDecommit_(PageAllocator allocator, void *ptr, smm size)
 {
 	Assert(size >= 0);
-	Assert(AlignPadPow2((umm)ptr, PageAllocatorAlign(allocator)) == 0);
+	Assert(IsAligned((umm)ptr, PageAllocatorAlign(allocator)));
 	void *p = allocator.proc(allocator.data, ptr, size, PageAllocatorOperation_Decommit);
 	Assert(p == 0);
 }
@@ -29,7 +29,7 @@ function void
 PageAllocatorRelease(PageAllocator allocator, void *ptr, smm size)
 {
 	Assert(size >= 0);
-	Assert(AlignPadPow2((umm)ptr, PageAllocatorAlign(allocator)) == 0);
+	Assert(IsAligned((umm)ptr, PageAllocatorAlign(allocator)));
 	void *p = allocator.proc(allocator.data, ptr, size, PageAllocatorOperation_Release);
 	Assert(p == 0);
 }
@@ -53,8 +53,8 @@ ArenaAlloc(PageAllocator allocator, smm initial_reserve_size, smm initial_commit
 	Assert(initial_reserve_size % initial_commit_increment == 0);
 
 	smm allocator_align = PageAllocatorAlign(allocator);
-	Assert(AlignPadPow2((umm)initial_reserve_size, allocator_align) == 0);
-	Assert(AlignPadPow2((umm)initial_commit_increment, allocator_align) == 0);
+	Assert(IsAligned((umm)initial_reserve_size, allocator_align));
+	Assert(IsAligned((umm)initial_commit_increment, allocator_align));
 
 	u8 *ptr = PageAllocatorReserve(allocator, initial_reserve_size);
 	PageAllocatorCommit(allocator, ptr, initial_commit_increment);

@@ -136,7 +136,7 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor, f32x2 mouse_locati
 
 	BuildUI(frame_arena, (f32)delta_time, (f32)self.window.backingScaleFactor, mouse_location);
 
-	AssertAlways(AlignPadPow2((umm)rectangles_buffer.contents, align_of(D_Rectangle)) == 0);
+	Assert(IsAligned((umm)rectangles_buffer.contents, align_of(D_Rectangle)));
 	AssertAlways((smm)d_state.rectangle_count * size_of(D_Rectangle) <=
 	             (smm)rectangles_buffer.length);
 	MemoryCopyArray((D_Rectangle *)rectangles_buffer.contents, d_state.rectangles,

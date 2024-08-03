@@ -48,7 +48,7 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor, f32x2 mouse_locati
 
 		UI_Pop();
 
-		for (smm i = 0; i < 20; i++)
+		for (smm i = 0; i < 15; i++)
 		{
 			String key = PushStringF(frame_arena, "item%ti", i);
 			UI_BoxFromString(key);

@@ -73,6 +73,7 @@ UI_BoxFromString(String string)
 	UI_Key key = UI_KeyFromString(string, seed);
 	UI_Box *result = PushStruct(ui_state.arena, UI_Box);
 	result->key = key;
+	result->string = string;
 
 	if (ui_state.current != 0)
 	{
@@ -115,31 +116,58 @@ UI_Pop(void)
 	ui_state.current = ui_state.current->parent;
 }
 
-function void
-UI_BoxLayout(UI_Box *box, f32x2 *cursor)
+global f32 ui_glyph_width = 10;
+global f32 ui_glyph_height = 20;
+global f32 ui_glyph_gap = 2;
+
+function f32x2
+UI_TextSize(String text)
 {
-	box->origin = *cursor;
+	f32x2 result = 0;
+	result.x = text.count * ui_glyph_width + (text.count - 1) * ui_glyph_gap;
+	result.y = ui_glyph_height;
+	result *= ui_state.scale_factor;
+	return result;
+}
 
-	*cursor += ui_state.padding;
+function void
+UI_TextDraw(String text, f32x2 origin)
+{
+	f32x2 cursor = origin;
+	for (smm i = 0; i < text.count; i++)
+	{
+		D_Rect(cursor, (f32x2){ui_glyph_width, ui_glyph_height} * ui_state.scale_factor,
+		        (f32x4){0, 0, 0, 1});
+		cursor.x += (ui_glyph_width + ui_glyph_gap) * ui_state.scale_factor;
+	}
+}
 
-	f32 widest = 0;
+function void
+UI_BoxLayout(UI_Box *box, f32x2 cursor)
+{
+	box->origin = cursor;
+	cursor += ui_state.padding;
+
+	f32x2 min_size = UI_TextSize(box->string);
+
 	for (UI_Box *child = box->first; child != 0; child = child->next)
 	{
 		UI_BoxLayout(child, cursor);
-		widest = Max(widest, child->size.x);
-		cursor->y += ui_state.padding.y;
+		min_size = Max(min_size, child->size);
+		cursor.y += child->size.y + ui_state.padding.y;
 	}
 
-	cursor->x -= ui_state.padding.x;
+	cursor.x -= ui_state.padding.x;
 
-	box->size.x = ui_state.padding.x * 2 + widest;
-	box->size.y = cursor->y - box->origin.y;
+	box->size.x = ui_state.padding.x * 2 + min_size.x;
+	box->size.y = Max(cursor.y - box->origin.y, ui_state.padding.y * 2 + min_size.y);
 }
 
 function void
 UI_BoxDraw(UI_Box *box)
 {
 	D_Rect(box->origin, box->size, (f32x4){1, 1, 1, 0.4f});
+	UI_TextDraw(box->string, box->origin + ui_state.padding);
 	for (UI_Box *child = box->first; child != 0; child = child->next)
 	{
 		UI_BoxDraw(child);
@@ -149,7 +177,6 @@ UI_BoxDraw(UI_Box *box)
 function void
 UI_Draw(void)
 {
-	f32x2 cursor = 0;
-	UI_BoxLayout(ui_state.root, &cursor);
+	UI_BoxLayout(ui_state.root, 0);
 	UI_BoxDraw(ui_state.root);
 }

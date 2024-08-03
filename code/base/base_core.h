@@ -62,6 +62,12 @@ function smm Mebibytes(smm n);
 function umm AlignPow2_(umm base, smm align) __attribute__((unused));
 function smm AlignPadPow2(umm base, smm align);
 
+function void MemoryCopy(void *dst, void *src, smm n);
+#define MemoryCopyArray(dst, src, n) \
+	Assert(size_of(*(dst)) == size_of(*(src))); \
+	MemoryCopy((dst), (src), (n) * size_of(*(dst)))
+#define MemoryCopyStruct(dst, src) MemoryCopyArray((dst), (src), 1)
+
 function void MemorySet(void *dst, u8 byte, smm n);
 function void MemoryZero(void *dst, smm n);
 #define MemoryZeroArray(dst, n) (MemoryZero((dst), (n) * size_of(*(dst))))

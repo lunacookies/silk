@@ -1,16 +1,17 @@
 #include <metal_stdlib>
 using namespace metal;
 
-struct VertexArguments
-{
-	float2 resolution;
-};
-
 struct Rectangle
 {
 	float2 origin;
 	float2 size;
 	float4 fill;
+};
+
+struct Arguments
+{
+	float2 resolution;
+	device Rectangle *rectangles;
 };
 
 struct RasterizerData
@@ -31,10 +32,9 @@ constant float2 positions[] = {
 vertex RasterizerData
 VertexMain(uint vertex_id [[vertex_id]],
         uint instance_id [[instance_id]],
-        constant VertexArguments &arguments,
-        device const Rectangle *rectangles)
+        constant Arguments &arguments)
 {
-	Rectangle rect = rectangles[instance_id];
+	Rectangle rect = arguments.rectangles[instance_id];
 	float2 vertex_position = rect.origin + rect.size * positions[vertex_id];
 
 	float4 vertex_position_ndc = float4(0, 0, 0, 1);
@@ -48,9 +48,9 @@ VertexMain(uint vertex_id [[vertex_id]],
 }
 
 fragment float4
-FragmentMain(RasterizerData input [[stage_in]], device const Rectangle *rectangles)
+FragmentMain(RasterizerData input [[stage_in]], constant Arguments &arguments)
 {
-	Rectangle rect = rectangles[input.instance_id];
+	Rectangle rect = arguments.rectangles[input.instance_id];
 	float4 result = rect.fill;
 	result.rgb *= result.a;
 	return result;

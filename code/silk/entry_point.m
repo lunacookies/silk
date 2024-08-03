@@ -18,12 +18,11 @@ CALayer (Private)
 - (void)setContentsChanged;
 @end
 
-typedef struct VertexArguments VertexArguments;
-struct VertexArguments
+typedef struct Arguments Arguments;
+struct Arguments
 {
 	f32x2 resolution;
-	f32x2 position;
-	f32x2 size;
+	u64 rectangles_address;
 };
 
 function void
@@ -48,7 +47,7 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor, f32x2 mouse_locati
 
 		UI_Pop();
 
-		for (smm i = 0; i < 15; i++)
+		for (smm i = 0; i < 20; i++)
 		{
 			String key = PushStringF(frame_arena, "item%ti", i);
 			UI_BoxFromString(key);
@@ -78,6 +77,7 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor, f32x2 mouse_locati
 	f32x2 mouse_location;
 	NSTrackingArea *tracking_area;
 
+	id<MTLBuffer> rectangles_buffer;
 	Arena *frame_arena;
 }
 
@@ -113,6 +113,11 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor, f32x2 mouse_locati
 
 	[display_link addToRunLoop:NSRunLoop.mainRunLoop forMode:NSRunLoopCommonModes];
 
+	rectangles_buffer = [device newBufferWithLength:(umm)Mebibytes(1)
+	                                        options:MTLResourceCPUCacheModeWriteCombined |
+	                                                MTLResourceStorageModeShared |
+	                                                MTLResourceHazardTrackingModeTracked];
+
 	frame_arena = OS_ArenaAllocDefault();
 
 	return self;
@@ -131,6 +136,12 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor, f32x2 mouse_locati
 
 	BuildUI(frame_arena, (f32)delta_time, (f32)self.window.backingScaleFactor, mouse_location);
 
+	AssertAlways(AlignPadPow2((umm)rectangles_buffer.contents, align_of(D_Rectangle)) == 0);
+	AssertAlways((smm)d_state.rectangle_count * size_of(D_Rectangle) <=
+	             (smm)rectangles_buffer.length);
+	MemoryCopyArray((D_Rectangle *)rectangles_buffer.contents, d_state.rectangles,
+	        d_state.rectangle_count);
+
 	display_link.paused = !d_state.wants_frame;
 	if (display_link.paused)
 	{
@@ -147,17 +158,19 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor, f32x2 mouse_locati
 	id<MTLRenderCommandEncoder> encoder =
 	        [command_buffer renderCommandEncoderWithDescriptor:descriptor];
 
-	VertexArguments arguments = {0};
+	Arguments arguments = {0};
 	arguments.resolution.x = texture.width;
 	arguments.resolution.y = texture.height;
+	arguments.rectangles_address = rectangles_buffer.gpuAddress;
 
 	[encoder setRenderPipelineState:pipeline_state];
 
-	[encoder setVertexBytes:&arguments length:sizeof(arguments) atIndex:0];
+	[encoder useResource:rectangles_buffer
+	               usage:MTLResourceUsageRead
+	              stages:MTLRenderStageVertex | MTLRenderStageFragment];
 
-	umm length = (umm)(size_of(D_Rectangle) * d_state.rectangle_count);
-	[encoder setVertexBytes:&d_state.rectangles length:length atIndex:1];
-	[encoder setFragmentBytes:&d_state.rectangles length:length atIndex:0];
+	[encoder setVertexBytes:&arguments length:sizeof(arguments) atIndex:0];
+	[encoder setFragmentBytes:&arguments length:sizeof(arguments) atIndex:0];
 
 	[encoder drawPrimitives:MTLPrimitiveTypeTriangle
 	            vertexStart:0

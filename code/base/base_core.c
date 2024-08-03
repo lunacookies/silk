@@ -93,6 +93,13 @@ AlignPadPow2(umm base, smm align)
 }
 
 function void
+MemoryCopy(void *dst, void *src, smm n)
+{
+	Assert(n >= 0);
+	memmove(dst, src, n);
+}
+
+function void
 MemorySet(void *dst, u8 byte, smm n)
 {
 	Assert(n >= 0);

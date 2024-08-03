@@ -190,8 +190,8 @@ UI_BoxFromString(String string)
 function UI_Signal
 UI_SignalFromBox(UI_Box *box)
 {
-	f32x2 p0 = box->origin;
-	f32x2 p1 = box->origin + box->size;
+	f32x2 p0 = box->origin_absolute;
+	f32x2 p1 = box->origin_absolute + box->size;
 
 	UI_Signal signal = {0};
 
@@ -297,31 +297,39 @@ UI_TextDraw(String text, f32x2 origin, f32x4 color)
 }
 
 function void
-UI_BoxLayout(UI_Box *box, f32x2 cursor)
+UI_BoxLayout(UI_Box *box)
 {
-	box->origin = cursor;
-	cursor += ui_state.padding;
-
+	f32x2 cursor = ui_state.padding;
 	f32x2 min_size = UI_TextSize(box->string);
 
 	for (UI_Box *child = box->first; child != 0; child = child->next)
 	{
-		UI_BoxLayout(child, cursor);
+		UI_BoxLayout(child);
+		child->origin = cursor;
 		min_size = Max(min_size, child->size);
 		cursor.y += child->size.y + ui_state.padding.y;
 	}
 
-	cursor.x -= ui_state.padding.x;
-
 	box->size.x = ui_state.padding.x * 2 + min_size.x;
-	box->size.y = Max(cursor.y - box->origin.y, ui_state.padding.y * 2 + min_size.y);
+	box->size.y = Max(cursor.y, ui_state.padding.y * 2 + min_size.y);
+}
+
+function void
+UI_BoxLayoutAbsolute(UI_Box *box, f32x2 cursor)
+{
+	cursor += box->origin;
+	box->origin_absolute = cursor;
+	for (UI_Box *child = box->first; child != 0; child = child->next)
+	{
+		UI_BoxLayoutAbsolute(child, cursor);
+	}
 }
 
 function void
 UI_BoxDraw(UI_Box *box)
 {
-	D_Rect(box->origin, box->size, box->background_color);
-	UI_TextDraw(box->string, box->origin + ui_state.padding, box->foreground_color);
+	D_Rect(box->origin_absolute, box->size, box->background_color);
+	UI_TextDraw(box->string, box->origin_absolute + ui_state.padding, box->foreground_color);
 	for (UI_Box *child = box->first; child != 0; child = child->next)
 	{
 		UI_BoxDraw(child);
@@ -331,6 +339,7 @@ UI_BoxDraw(UI_Box *box)
 function void
 UI_Draw(void)
 {
-	UI_BoxLayout(ui_state.root, 0);
+	UI_BoxLayout(ui_state.root);
+	UI_BoxLayoutAbsolute(ui_state.root, 0);
 	UI_BoxDraw(ui_state.root);
 }

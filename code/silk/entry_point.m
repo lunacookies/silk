@@ -33,7 +33,7 @@ B(String string)
 	UI_Signal signal = UI_SignalFromBox(b);
 	if (UI_Pressed(signal))
 	{
-		b->background_color = (f32x4){0.5f, 0.5f, 1, 1};
+		b->background_color = (f32x4){1, 0, 0, 1};
 		b->foreground_color = (f32x4){1, 1, 1, 1};
 	}
 	else if (UI_Hovered(signal))

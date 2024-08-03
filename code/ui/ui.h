@@ -18,6 +18,7 @@ struct UI_Box
 	f32x4 foreground_color;
 
 	f32x2 origin;
+	f32x2 origin_absolute;
 	f32x2 size;
 
 	String string;

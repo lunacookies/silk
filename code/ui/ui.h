@@ -13,6 +13,9 @@ struct UI_Box
 	UI_Box *parent;
 	UI_Key key;
 
+	f32x4 background_color;
+	f32x4 foreground_color;
+
 	f32x2 origin;
 	f32x2 size;
 

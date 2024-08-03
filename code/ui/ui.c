@@ -131,13 +131,13 @@ UI_TextSize(String text)
 }
 
 function void
-UI_TextDraw(String text, f32x2 origin)
+UI_TextDraw(String text, f32x2 origin, f32x4 color)
 {
 	f32x2 cursor = origin;
 	for (smm i = 0; i < text.count; i++)
 	{
 		D_Rect(cursor, (f32x2){ui_glyph_width, ui_glyph_height} * ui_state.scale_factor,
-		        (f32x4){0, 0, 0, 1});
+		        color);
 		cursor.x += (ui_glyph_width + ui_glyph_gap) * ui_state.scale_factor;
 	}
 }
@@ -166,8 +166,8 @@ UI_BoxLayout(UI_Box *box, f32x2 cursor)
 function void
 UI_BoxDraw(UI_Box *box)
 {
-	D_Rect(box->origin, box->size, (f32x4){1, 1, 1, 0.4f});
-	UI_TextDraw(box->string, box->origin + ui_state.padding);
+	D_Rect(box->origin, box->size, box->background_color);
+	UI_TextDraw(box->string, box->origin + ui_state.padding, box->foreground_color);
 	for (UI_Box *child = box->first; child != 0; child = child->next)
 	{
 		UI_BoxDraw(child);

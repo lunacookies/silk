@@ -34,15 +34,24 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor, f32x2 mouse_locati
 	UI_BeginFrame(delta_time, scale_factor, padding);
 
 	UI_MakeNextCurrent();
-	UI_BoxFromString(S("panel"));
+	UI_Box *b = UI_BoxFromString(S("panel"));
+	b->background_color = (f32x4){1, 1, 1, 0.5f};
+	b->foreground_color = (f32x4){0, 0, 0, 1};
 
 	{
 		UI_MakeNextCurrent();
-		UI_BoxFromString(S("foo1"));
+		b = UI_BoxFromString(S("foo1"));
+		b->background_color = (f32x4){1, 1, 1, 0.5f};
+		b->foreground_color = (f32x4){0, 0, 0, 1};
 
 		{
-			UI_BoxFromString(S("foo1"));
-			UI_BoxFromString(S("foo2"));
+			b = UI_BoxFromString(S("foo1"));
+			b->background_color = (f32x4){1, 1, 1, 0.5f};
+			b->foreground_color = (f32x4){0, 0, 0, 1};
+
+			b = UI_BoxFromString(S("foo2"));
+			b->background_color = (f32x4){1, 1, 1, 0.5f};
+			b->foreground_color = (f32x4){0, 0, 0, 1};
 		}
 
 		UI_Pop();
@@ -50,7 +59,9 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor, f32x2 mouse_locati
 		for (smm i = 0; i < 20; i++)
 		{
 			String key = PushStringF(frame_arena, "item%ti", i);
-			UI_BoxFromString(key);
+			b = UI_BoxFromString(key);
+			b->background_color = (f32x4){1, 1, 1, 0.5f};
+			b->foreground_color = (f32x4){0, 0, 0, 1};
 		}
 	}
 

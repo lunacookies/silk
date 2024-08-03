@@ -252,7 +252,7 @@ UI_Pressed(UI_Signal signal)
 }
 
 function b32
-UI_Released_(UI_Signal signal)
+UI_Released(UI_Signal signal)
 {
 	b32 result = signal.flags & UI_SignalFlag_Released;
 	return result;

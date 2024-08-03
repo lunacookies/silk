@@ -59,7 +59,7 @@ function UI_Box *UI_BoxFromString(String string);
 function UI_Signal UI_SignalFromBox(UI_Box *box);
 function b32 UI_Hovered(UI_Signal signal);
 function b32 UI_Pressed(UI_Signal signal);
-function b32 UI_Released_(UI_Signal signal) __attribute__((unused));
+function b32 UI_Released(UI_Signal signal);
 function void UI_MakeNextCurrent(void);
 function void UI_Pop(void);
 function void UI_Draw(void);

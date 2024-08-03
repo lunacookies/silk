@@ -25,10 +25,11 @@ struct Arguments
 	u64 rectangles_address;
 };
 
-function void
+function UI_Signal
 B(String string)
 {
 	UI_Box *b = UI_BoxFromString(string);
+
 	UI_Signal signal = UI_SignalFromBox(b);
 	if (UI_Pressed(signal))
 	{
@@ -45,6 +46,8 @@ B(String string)
 		b->background_color = (f32x4){1, 1, 1, 0.5f};
 		b->foreground_color = (f32x4){0, 0, 0, 1};
 	}
+
+	return signal;
 }
 
 function void
@@ -52,13 +55,25 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor)
 {
 	D_BeginFrame();
 
-	f32x2 padding = (f32x2){50, 25};
+	f32x2 padding = (f32x2){20, 10};
 	UI_BeginFrame(delta_time, scale_factor, padding);
 
 	UI_MakeNextCurrent();
 	B(S("panel"));
 
+	local_persist smm count = 0;
+
 	{
+		if (UI_Released(B(S("+"))))
+		{
+			count++;
+		}
+
+		if (UI_Released(B(S("-"))) && count > 0)
+		{
+			count--;
+		}
+
 		UI_MakeNextCurrent();
 		B(S("foo1"));
 
@@ -69,7 +84,7 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor)
 
 		UI_Pop();
 
-		for (smm i = 0; i < 20; i++)
+		for (smm i = 0; i < count; i++)
 		{
 			B(PushStringF(frame_arena, "item%ti", i));
 		}

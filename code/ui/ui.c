@@ -1,10 +1,20 @@
+typedef struct UI_BoxSlot UI_BoxSlot;
+struct UI_BoxSlot
+{
+	UI_Box *first;
+	UI_Box *last;
+};
+
 typedef struct UI_State UI_State;
 struct UI_State
 {
 	Arena *arena;
+	UI_BoxSlot *slots;
+	smm slot_count;
 	UI_Box *root;
 	UI_Box *current;
 	b32 next_current;
+
 	f32 scale_factor;
 	f32x2 padding_target;
 	f32x2 padding;
@@ -15,14 +25,12 @@ global UI_State ui_state;
 function void
 UI_BeginFrame(f32 delta_time, f32 scale_factor, f32x2 padding)
 {
-	Arena *arena = ui_state.arena;
-	if (arena == 0)
+	if (ui_state.arena == 0)
 	{
-		arena = OS_ArenaAllocDefault();
+		ui_state.arena = OS_ArenaAllocDefault();
+		ui_state.slot_count = 128;
+		ui_state.slots = PushArray(ui_state.arena, UI_BoxSlot, ui_state.slot_count);
 	}
-
-	ArenaClear(arena);
-	ui_state.arena = arena;
 
 	ui_state.root = 0;
 	ui_state.current = 0;
@@ -71,37 +79,71 @@ UI_BoxFromString(String string)
 	}
 
 	UI_Key key = UI_KeyFromString(string, seed);
-	UI_Box *result = PushStruct(ui_state.arena, UI_Box);
-	result->key = key;
-	result->string = string;
+	UI_Box *box = 0;
 
-	if (ui_state.current != 0)
+	Assert(SetBitCount((u64)ui_state.slot_count) == 1);
+	smm slot_index = (smm)(key.raw & ((umm)ui_state.slot_count - 1));
+	Assert(slot_index >= 0);
+	Assert(slot_index < ui_state.slot_count);
+	UI_BoxSlot *slot = ui_state.slots + slot_index;
+
+	for (UI_Box *slot_box = slot->first; slot_box != 0; slot_box = slot_box->next_in_slot)
 	{
-		result->parent = ui_state.current;
-		if (ui_state.current->first == 0)
+		if (slot_box->key.raw == key.raw)
 		{
-			ui_state.current->first = result;
+			box = slot_box;
+			box->first = 0;
+			box->last = 0;
+			box->next = 0;
+			box->parent = 0;
+			break;
+		}
+	}
+
+	if (box == 0)
+	{
+		if (slot->first == 0)
+		{
+			box = PushStruct(ui_state.arena, UI_Box);
+			slot->first = box;
 		}
 		else
 		{
-			ui_state.current->last->next = result;
+			slot->last->next_in_slot = box;
 		}
-		ui_state.current->last = result;
+		slot->last = box;
+	}
+
+	box->key = key;
+	box->string = string;
+
+	if (ui_state.current != 0)
+	{
+		box->parent = ui_state.current;
+		if (ui_state.current->first == 0)
+		{
+			ui_state.current->first = box;
+		}
+		else
+		{
+			ui_state.current->last->next = box;
+		}
+		ui_state.current->last = box;
 	}
 
 	if (ui_state.root == 0)
 	{
-		ui_state.root = result;
-		ui_state.current = result;
+		ui_state.root = box;
+		ui_state.current = box;
 	}
 
 	if (ui_state.next_current)
 	{
-		ui_state.current = result;
+		ui_state.current = box;
 		ui_state.next_current = 0;
 	}
 
-	return result;
+	return box;
 }
 
 function void

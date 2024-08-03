@@ -11,6 +11,7 @@ struct UI_Box
 	UI_Box *last;
 	UI_Box *next;
 	UI_Box *parent;
+	UI_Box *next_in_slot;
 	UI_Key key;
 
 	f32x4 background_color;

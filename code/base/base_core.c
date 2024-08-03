@@ -1,3 +1,33 @@
+function u64
+SetBitCount(u64 x)
+{
+	u64 result = (u64)__builtin_popcountll(x);
+	return result;
+}
+
+function u64
+RotateLeft(u64 x, u64 y)
+{
+	u64 result = __builtin_rotateleft64(x, y);
+	return result;
+}
+
+function f32
+Max(f32 a, f32 b) __attribute__((overloadable))
+{
+	f32 result = a > b ? a : b;
+	return result;
+}
+
+function f32x2
+Max(f32x2 a, f32x2 b) __attribute__((overloadable))
+{
+	f32x2 result = {0};
+	result[0] = Max(a[0], b[0]);
+	result[1] = Max(a[1], b[1]);
+	return result;
+}
+
 function f32
 Pow(f32 base, f32 exponent)
 {
@@ -40,7 +70,7 @@ function umm
 AlignPow2_(umm base, smm align)
 {
 	Assert(align >= 1);
-	Assert(SetBitCountU64((u64)align) == 1);
+	Assert(SetBitCount((u64)align) == 1);
 
 	umm mask = (umm)align - 1;
 	umm result = (base + mask) & ~mask;
@@ -53,7 +83,7 @@ function smm
 AlignPadPow2(umm base, smm align)
 {
 	Assert(align >= 1);
-	Assert(SetBitCountU64((u64)align) == 1);
+	Assert(SetBitCount((u64)align) == 1);
 
 	umm mask = (umm)align - 1;
 	smm result = (smm)(-base & mask);

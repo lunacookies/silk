@@ -55,7 +55,7 @@ UI_KeyFromString(String string, UI_Key seed)
 	for (smm i = 0; i < string.count; i++)
 	{
 		u64 value = (u64)string.data[i];
-		result.raw = (RotateLeft64(result.raw, 5) ^ value) * 0x517cc1b727220a95;
+		result.raw = (RotateLeft(result.raw, 5) ^ value) * 0x517cc1b727220a95;
 	}
 
 	return result;

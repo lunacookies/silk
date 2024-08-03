@@ -14,7 +14,7 @@ OS_Init(void)
 		AssertAlways(size == (umm)size_of(s32));
 
 		AssertAlways(value >= 1);
-		AssertAlways(SetBitCountU64((u64)value) == 1);
+		AssertAlways(SetBitCount((u64)value) == 1);
 		os_hardware_info->page_size = value;
 	}
 

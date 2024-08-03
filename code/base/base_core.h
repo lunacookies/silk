@@ -43,17 +43,15 @@ typedef b32 __attribute__((ext_vector_type(4))) b32x4;
 #define Assert(condition) (void)(condition)
 #endif
 
-#define Min(x, y) (((x) < (y)) ? (x) : (y))
-#define Max(x, y) (((x) > (y)) ? (x) : (y))
-
 #define size_of(T) ((smm)sizeof(T))
 #define align_of(T) ((smm) _Alignof(T))
 
 #define ArrayCount(a) (size_of(a) / size_of((a)[0]))
 
-#define SetBitCountU64(x) (__builtin_popcountll(x))
-#define RotateLeft64(x, y) (__builtin_rotateleft64((x), (y)))
-
+function u64 SetBitCount(u64 x);
+function u64 RotateLeft(u64 x, u64 y);
+function f32 Max(f32 a, f32 b) __attribute__((overloadable));
+function f32x2 Max(f32x2 a, f32x2 b) __attribute__((overloadable));
 function f32 Pow(f32 base, f32 exponent);
 function f32x2 Abs(f32x2 v);
 function b32 All(b32x2 v);

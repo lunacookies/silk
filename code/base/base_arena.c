@@ -40,7 +40,7 @@ PageAllocatorAlign(PageAllocator allocator)
 	void *result_raw = allocator.proc(allocator.data, 0, 0, PageAllocatorOperation_QueryAlign);
 	smm result = (smm)result_raw;
 	Assert(result >= 1);
-	Assert(SetBitCountU64((u64)result) == 1);
+	Assert(SetBitCount((u64)result) == 1);
 	return result;
 }
 
@@ -89,7 +89,7 @@ ArenaPush(Arena *arena, smm size, smm align)
 {
 	Assert(size >= 0);
 	Assert(align >= 1);
-	Assert(SetBitCountU64((u64)align) == 1);
+	Assert(SetBitCount((u64)align) == 1);
 
 	u8 *ptr = arena->ptr + arena->used;
 	smm padding = AlignPadPow2((umm)ptr, align);

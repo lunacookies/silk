@@ -24,6 +24,9 @@ struct UI_Box
 	f32x2 origin_target;
 	f32x2 size_target;
 
+	b32 hovered;
+	b32 pressed;
+
 	String string;
 };
 
@@ -46,9 +49,9 @@ struct UI_Event
 };
 
 typedef u32 UI_SignalFlags;
-global const UI_SignalFlags UI_SignalFlag_Hovered = 1 << 2;
-global const UI_SignalFlags UI_SignalFlag_Pressed = 1 << 0;
-global const UI_SignalFlags UI_SignalFlag_Released = 1 << 1;
+global const UI_SignalFlags UI_SignalFlag_Hovered = 1 << 0;
+global const UI_SignalFlags UI_SignalFlag_Pressed = 1 << 1;
+global const UI_SignalFlags UI_SignalFlag_Released = 1 << 2;
 
 typedef struct UI_Signal UI_Signal;
 struct UI_Signal

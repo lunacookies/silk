@@ -182,6 +182,16 @@ UI_SignalFromBox(UI_Box *box)
 
 	UI_Signal signal = {0};
 
+	if (box->hovered)
+	{
+		signal.flags |= UI_SignalFlag_Hovered;
+	}
+
+	if (box->pressed)
+	{
+		signal.flags |= UI_SignalFlag_Pressed;
+	}
+
 	for (UI_EventNode *node = ui_state.first_event_node; node != 0; node = node->next)
 	{
 		UI_Event *event = &node->event;
@@ -196,6 +206,19 @@ UI_SignalFromBox(UI_Box *box)
 		b32 in_bounds = All(p0 <= event->origin) && All(event->origin < p1);
 		if (!in_bounds)
 		{
+			switch (event->kind)
+			{
+				case UI_EventKind_MouseEntered:
+				case UI_EventKind_MouseMoved:
+				case UI_EventKind_MouseDown:
+				case UI_EventKind_MouseUp:
+					signal.flags &= ~UI_SignalFlag_Hovered;
+					signal.flags &= ~UI_SignalFlag_Pressed;
+					break;
+
+				default:
+					break;
+			}
 			continue;
 		}
 
@@ -214,12 +237,16 @@ UI_SignalFromBox(UI_Box *box)
 			case UI_EventKind_MouseUp:
 				signal.flags |= UI_SignalFlag_Hovered;
 				signal.flags |= UI_SignalFlag_Released;
+				signal.flags &= ~UI_SignalFlag_Pressed;
 				break;
 
 			default:
 				Unreachable();
 		}
 	}
+
+	box->hovered = signal.flags & UI_SignalFlag_Hovered;
+	box->pressed = signal.flags & UI_SignalFlag_Pressed;
 
 	return signal;
 }

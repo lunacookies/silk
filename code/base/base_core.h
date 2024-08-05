@@ -1,6 +1,7 @@
 #define function static
 #define global static
 #define local_persist static
+#define read_only __attribute__((section("__TEXT,__const")))
 
 typedef uint8_t u8;
 typedef uint16_t u16;

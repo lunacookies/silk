@@ -49,9 +49,9 @@ struct UI_Event
 };
 
 typedef u32 UI_SignalFlags;
-global const UI_SignalFlags UI_SignalFlag_Hovered = 1 << 0;
-global const UI_SignalFlags UI_SignalFlag_Pressed = 1 << 1;
-global const UI_SignalFlags UI_SignalFlag_Released = 1 << 2;
+global read_only UI_SignalFlags UI_SignalFlag_Hovered = 1 << 0;
+global read_only UI_SignalFlags UI_SignalFlag_Pressed = 1 << 1;
+global read_only UI_SignalFlags UI_SignalFlag_Released = 1 << 2;
 
 typedef struct UI_Signal UI_Signal;
 struct UI_Signal

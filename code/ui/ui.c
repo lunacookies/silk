@@ -245,8 +245,8 @@ UI_SignalFromBox(UI_Box *box)
 		}
 	}
 
-	box->hovered = signal.flags & UI_SignalFlag_Hovered;
-	box->pressed = signal.flags & UI_SignalFlag_Pressed;
+	box->hovered = (b32)(signal.flags & UI_SignalFlag_Hovered);
+	box->pressed = (b32)(signal.flags & UI_SignalFlag_Pressed);
 
 	return signal;
 }
@@ -254,21 +254,21 @@ UI_SignalFromBox(UI_Box *box)
 function b32
 UI_Hovered(UI_Signal signal)
 {
-	b32 result = signal.flags & UI_SignalFlag_Hovered;
+	b32 result = (b32)(signal.flags & UI_SignalFlag_Hovered);
 	return result;
 }
 
 function b32
 UI_Pressed(UI_Signal signal)
 {
-	b32 result = signal.flags & UI_SignalFlag_Pressed;
+	b32 result = (b32)(signal.flags & UI_SignalFlag_Pressed);
 	return result;
 }
 
 function b32
 UI_Released(UI_Signal signal)
 {
-	b32 result = signal.flags & UI_SignalFlag_Released;
+	b32 result = (b32)(signal.flags & UI_SignalFlag_Released);
 	return result;
 }
 
@@ -284,9 +284,9 @@ UI_Pop(void)
 	ui_state.current = ui_state.current->parent;
 }
 
-global f32 ui_glyph_width = 10;
-global f32 ui_glyph_height = 20;
-global f32 ui_glyph_gap = 2;
+global read_only f32 ui_glyph_width = 10;
+global read_only f32 ui_glyph_height = 20;
+global read_only f32 ui_glyph_gap = 2;
 
 function f32x2
 UI_TextSize(String text)

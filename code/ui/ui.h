@@ -12,7 +12,10 @@ struct UI_Box
 	UI_Box *next;
 	UI_Box *parent;
 	UI_Box *next_in_slot;
+	UI_Box *prev_in_slot;
 	UI_Key key;
+
+	smm last_update_frame_index;
 
 	f32x4 background_color;
 	f32x4 foreground_color;

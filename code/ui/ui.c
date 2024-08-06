@@ -29,6 +29,8 @@ struct UI_State
 	f32 delta_time;
 	f32 scale_factor;
 	f32x2 padding;
+
+	smm frame_index;
 };
 
 global UI_State ui_state;
@@ -48,10 +50,6 @@ UI_BeginFrame(f32 delta_time, f32 scale_factor, f32x2 padding)
 		ui_state.frame_arena = OS_ArenaAllocDefault();
 	}
 
-	ui_state.root = 0;
-	ui_state.current = 0;
-	ui_state.next_current = 0;
-
 	ui_state.delta_time = delta_time;
 	ui_state.scale_factor = scale_factor;
 	ui_state.padding = scale_factor * padding;
@@ -61,8 +59,52 @@ function void
 UI_EndFrame(void)
 {
 	ArenaClear(ui_state.frame_arena);
+
+	ui_state.root = 0;
+	ui_state.current = 0;
+	ui_state.next_current = 0;
+
 	ui_state.first_event_node = 0;
 	ui_state.last_event_node = 0;
+
+	for (smm slot_index = 0; slot_index < ui_state.slot_count; slot_index++)
+	{
+		UI_BoxSlot *slot = ui_state.slots + slot_index;
+		UI_Box *next = 0;
+		for (UI_Box *box = slot->first; box != 0; box = next)
+		{
+			next = box->next_in_slot;
+			if (box->last_update_frame_index == ui_state.frame_index)
+			{
+				continue;
+			}
+
+			if (box == slot->first && box == slot->last)
+			{
+				slot->first = 0;
+				slot->last = 0;
+			}
+			else if (box == slot->first)
+			{
+				slot->first = slot->first->next_in_slot;
+				box->next_in_slot->prev_in_slot = 0;
+			}
+			else if (box == slot->last)
+			{
+				slot->last = slot->last->prev_in_slot;
+				box->prev_in_slot->next_in_slot = 0;
+			}
+			else
+			{
+				box->prev_in_slot->next_in_slot = box->next_in_slot;
+				box->next_in_slot->prev_in_slot = box->prev_in_slot;
+			}
+
+			MemoryZeroStruct(box);
+		}
+	}
+
+	ui_state.frame_index++;
 }
 
 function void
@@ -130,9 +172,10 @@ UI_BoxFromString(String string)
 
 	if (box == 0)
 	{
+		box = PushStruct(ui_state.arena, UI_Box);
+		box->prev_in_slot = slot->last;
 		if (slot->first == 0)
 		{
-			box = PushStruct(ui_state.arena, UI_Box);
 			slot->first = box;
 		}
 		else
@@ -144,6 +187,8 @@ UI_BoxFromString(String string)
 
 	box->key = key;
 	box->string = string;
+
+	box->last_update_frame_index = ui_state.frame_index;
 
 	if (ui_state.current != 0)
 	{

@@ -233,6 +233,8 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor)
 	event.kind = UI_EventKind_MouseEntered;
 	event.origin.x = (f32)point.x;
 	event.origin.y = (f32)point.y;
+	UI_EnqueueEvent(event);
+
 	display_link.paused = NO;
 }
 
@@ -240,6 +242,8 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor)
 {
 	UI_Event event = {0};
 	event.kind = UI_EventKind_MouseExited;
+	UI_EnqueueEvent(event);
+
 	display_link.paused = NO;
 }
 

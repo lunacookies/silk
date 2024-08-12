@@ -160,6 +160,11 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor)
 	self.needsDisplay = YES;
 }
 
+- (BOOL)wantsUpdateLayer
+{
+	return YES;
+}
+
 - (void)updateLayer
 {
 	f64 now = CACurrentMediaTime();

@@ -166,6 +166,7 @@ UI_BoxFromString(String string)
 			box->last = 0;
 			box->next = 0;
 			box->parent = 0;
+			box->first_frame = 0;
 			break;
 		}
 	}
@@ -173,6 +174,7 @@ UI_BoxFromString(String string)
 	if (box == 0)
 	{
 		box = PushStruct(ui_state.arena, UI_Box);
+		box->first_frame = 1;
 		box->prev_in_slot = slot->last;
 		if (slot->first == 0)
 		{
@@ -374,24 +376,30 @@ UI_StepAnimation(f32x2 *actual, f32x2 target, f32x2 epsilon)
 }
 
 function void
-UI_BoxLayout(UI_Box *box)
+UI_BoxLayout(UI_Box *box, f32x2 parent_cursor)
 {
 	f32x2 cursor = ui_state.padding;
 	f32x2 min_size = UI_TextSize(box->string);
 
 	for (UI_Box *child = box->first; child != 0; child = child->next)
 	{
-		UI_BoxLayout(child);
-		child->origin_target = cursor;
+		UI_BoxLayout(child, cursor);
 		min_size = Max(min_size, child->size_target);
 		cursor.y += child->size_target.y + ui_state.padding.y;
 	}
 
+	box->origin_target = parent_cursor;
 	box->size_target.x = ui_state.padding.x * 2 + min_size.x;
 	box->size_target.y = Max(cursor.y, ui_state.padding.y * 2 + min_size.y);
 
 	UI_StepAnimation(&box->origin, box->origin_target, 0.1f);
 	UI_StepAnimation(&box->size, box->size_target, 0.1f);
+
+	if (box->first_frame)
+	{
+		box->origin = box->origin_target;
+		box->size = box->size_target;
+	}
 }
 
 function void
@@ -419,7 +427,7 @@ UI_BoxDraw(UI_Box *box)
 function void
 UI_Draw(void)
 {
-	UI_BoxLayout(ui_state.root);
+	UI_BoxLayout(ui_state.root, 0);
 	UI_BoxLayoutAbsolute(ui_state.root, 0);
 	UI_BoxDraw(ui_state.root);
 }

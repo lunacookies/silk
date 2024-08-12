@@ -16,6 +16,7 @@ struct UI_Box
 	UI_Key key;
 
 	smm last_update_frame_index;
+	b32 first_frame;
 
 	f32x4 background_color;
 	f32x4 foreground_color;

@@ -259,6 +259,7 @@ UI_SignalFromBox(UI_Box *box)
 				case UI_EventKind_MouseMoved:
 				case UI_EventKind_MouseDown:
 				case UI_EventKind_MouseUp:
+				case UI_EventKind_Scroll:
 					signal.flags &= ~UI_SignalFlag_Hovered;
 					signal.flags &= ~UI_SignalFlag_Pressed;
 					break;
@@ -269,22 +270,25 @@ UI_SignalFromBox(UI_Box *box)
 			continue;
 		}
 
+		signal.flags |= UI_SignalFlag_Hovered;
+
 		switch (event->kind)
 		{
 			case UI_EventKind_MouseEntered:
 			case UI_EventKind_MouseMoved:
-				signal.flags |= UI_SignalFlag_Hovered;
 				break;
 
 			case UI_EventKind_MouseDown:
-				signal.flags |= UI_SignalFlag_Hovered;
 				signal.flags |= UI_SignalFlag_Pressed;
 				break;
 
 			case UI_EventKind_MouseUp:
-				signal.flags |= UI_SignalFlag_Hovered;
 				signal.flags |= UI_SignalFlag_Released;
 				signal.flags &= ~UI_SignalFlag_Pressed;
+				break;
+
+			case UI_EventKind_Scroll:
+				box->child_offset += event->delta;
 				break;
 
 			default:
@@ -407,6 +411,7 @@ UI_BoxLayoutAbsolute(UI_Box *box, f32x2 cursor)
 {
 	cursor += box->origin;
 	box->origin_absolute = cursor;
+	cursor += box->child_offset;
 	for (UI_Box *child = box->first; child != 0; child = child->next)
 	{
 		UI_BoxLayoutAbsolute(child, cursor);

@@ -24,6 +24,7 @@ struct UI_Box
 	f32x2 origin;
 	f32x2 origin_absolute;
 	f32x2 size;
+	f32x2 child_offset;
 
 	f32x2 origin_target;
 	f32x2 size_target;
@@ -42,6 +43,7 @@ typedef enum
 	UI_EventKind_MouseMoved,
 	UI_EventKind_MouseDown,
 	UI_EventKind_MouseUp,
+	UI_EventKind_Scroll,
 	UI_EventKind__Count,
 } UI_EventKind;
 
@@ -50,6 +52,7 @@ struct UI_Event
 {
 	UI_EventKind kind;
 	f32x2 origin;
+	f32x2 delta;
 };
 
 typedef u32 UI_SignalFlags;

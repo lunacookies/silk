@@ -253,6 +253,11 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor)
 	[self handleEvent:event];
 }
 
+- (void)scrollWheel:(NSEvent *)event
+{
+	[self handleEvent:event];
+}
+
 - (void)handleEvent:(NSEvent *)ns_event
 {
 	NSPoint point = ns_event.locationInWindow;
@@ -283,12 +288,22 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor)
 			event.kind = UI_EventKind_MouseUp;
 			break;
 
+		case NSEventTypeScrollWheel:
+			event.kind = UI_EventKind_Scroll;
+			break;
+
 		default:
 			Unreachable();
 	}
 
 	event.origin.x = (f32)point.x;
 	event.origin.y = (f32)point.y;
+
+	if (event.kind == UI_EventKind_Scroll)
+	{
+		event.delta.x = (f32)(ns_event.scrollingDeltaX * self.window.backingScaleFactor);
+		event.delta.y = (f32)(ns_event.scrollingDeltaY * self.window.backingScaleFactor);
+	}
 
 	UI_EnqueueEvent(event);
 	self.needsDisplay = YES;

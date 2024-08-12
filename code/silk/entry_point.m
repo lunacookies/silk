@@ -109,7 +109,7 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor)
 	id<MTLTexture> texture;
 	CADisplayLink *display_link;
 	b32 just_paused_display_link;
-	f64 last_presentation_timestamp;
+	f64 last_frame_time;
 
 	NSTrackingArea *tracking_area;
 
@@ -161,8 +161,13 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor)
 
 - (void)displayLinkDidRequestFrame
 {
-	f64 next_presentation_timestamp = display_link.targetTimestamp;
-	f64 delta_time = next_presentation_timestamp - last_presentation_timestamp;
+	self.needsDisplay = YES;
+}
+
+- (void)updateLayer
+{
+	f64 now = CACurrentMediaTime();
+	f64 delta_time = now - last_frame_time;
 
 	if (just_paused_display_link)
 	{
@@ -220,76 +225,73 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor)
 	[self.layer setContentsChanged];
 
 	ArenaClear(frame_arena);
-	last_presentation_timestamp = next_presentation_timestamp;
+	last_frame_time = now;
 }
 
-- (void)mouseEntered:(NSEvent *)ns_event
+- (void)mouseEntered:(NSEvent *)event
+{
+	[self handleEvent:event];
+}
+
+- (void)mouseExited:(NSEvent *)event
+{
+	[self handleEvent:event];
+}
+
+- (void)mouseMoved:(NSEvent *)event
+{
+	[self handleEvent:event];
+}
+
+- (void)mouseDown:(NSEvent *)event
+{
+	[self handleEvent:event];
+}
+
+- (void)mouseUp:(NSEvent *)event
+{
+	[self handleEvent:event];
+}
+
+- (void)handleEvent:(NSEvent *)ns_event
 {
 	NSPoint point = ns_event.locationInWindow;
 	point.y = self.frame.size.height - point.y;
 	point = [self convertPointToBacking:point];
 
 	UI_Event event = {0};
-	event.kind = UI_EventKind_MouseEntered;
+
+	switch (ns_event.type)
+	{
+		case NSEventTypeMouseEntered:
+			event.kind = UI_EventKind_MouseEntered;
+			break;
+
+		case NSEventTypeMouseExited:
+			event.kind = UI_EventKind_MouseExited;
+			break;
+
+		case NSEventTypeMouseMoved:
+			event.kind = UI_EventKind_MouseMoved;
+			break;
+
+		case NSEventTypeLeftMouseDown:
+			event.kind = UI_EventKind_MouseDown;
+			break;
+
+		case NSEventTypeLeftMouseUp:
+			event.kind = UI_EventKind_MouseUp;
+			break;
+
+		default:
+			Unreachable();
+	}
+
 	event.origin.x = (f32)point.x;
 	event.origin.y = (f32)point.y;
+
 	UI_EnqueueEvent(event);
-
-	display_link.paused = NO;
-}
-
-- (void)mouseExited:(NSEvent *)ns_event
-{
-	UI_Event event = {0};
-	event.kind = UI_EventKind_MouseExited;
-	UI_EnqueueEvent(event);
-
-	display_link.paused = NO;
-}
-
-- (void)mouseMoved:(NSEvent *)ns_event
-{
-	NSPoint point = ns_event.locationInWindow;
-	point.y = self.frame.size.height - point.y;
-	point = [self convertPointToBacking:point];
-
-	UI_Event event = {0};
-	event.kind = UI_EventKind_MouseMoved;
-	event.origin.x = (f32)point.x;
-	event.origin.y = (f32)point.y;
-	UI_EnqueueEvent(event);
-
-	display_link.paused = NO;
-}
-
-- (void)mouseDown:(NSEvent *)ns_event
-{
-	NSPoint point = ns_event.locationInWindow;
-	point.y = self.frame.size.height - point.y;
-	point = [self convertPointToBacking:point];
-
-	UI_Event event = {0};
-	event.kind = UI_EventKind_MouseDown;
-	event.origin.x = (f32)point.x;
-	event.origin.y = (f32)point.y;
-	UI_EnqueueEvent(event);
-
-	display_link.paused = NO;
-}
-
-- (void)mouseUp:(NSEvent *)ns_event
-{
-	NSPoint point = ns_event.locationInWindow;
-	point.y = self.frame.size.height - point.y;
-	point = [self convertPointToBacking:point];
-
-	UI_Event event = {0};
-	event.kind = UI_EventKind_MouseUp;
-	event.origin.x = (f32)point.x;
-	event.origin.y = (f32)point.y;
-	UI_EnqueueEvent(event);
-
-	display_link.paused = NO;
+	self.needsDisplay = YES;
 }
 
 - (void)updateTrackingAreas
@@ -310,14 +312,14 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor)
 {
 	[super setFrameSize:size];
 	[self updateIOSurface];
-	display_link.paused = NO;
+	self.needsDisplay = YES;
 }
 
 - (void)viewDidChangeBackingProperties
 {
 	[super viewDidChangeBackingProperties];
 	[self updateIOSurface];
-	display_link.paused = NO;
+	self.needsDisplay = YES;
 }
 
 - (void)updateIOSurface

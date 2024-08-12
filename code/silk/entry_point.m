@@ -13,11 +13,6 @@
 #include "draw/draw.c"
 #include "ui/ui.c"
 
-@interface
-CALayer (Private)
-- (void)setContentsChanged;
-@end
-
 typedef struct Arguments Arguments;
 struct Arguments
 {
@@ -105,8 +100,9 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor)
 	id<MTLCommandQueue> command_queue;
 	id<MTLRenderPipelineState> pipeline_state;
 
-	IOSurfaceRef io_surface;
-	id<MTLTexture> texture;
+	smm current_surface;
+	IOSurfaceRef io_surfaces[2];
+	id<MTLTexture> textures[2];
 	CADisplayLink *display_link;
 	b32 just_paused_display_link;
 	f64 last_frame_time;
@@ -192,7 +188,7 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor)
 	id<MTLCommandBuffer> command_buffer = [command_queue commandBuffer];
 
 	MTLRenderPassDescriptor *descriptor = [[MTLRenderPassDescriptor alloc] init];
-	descriptor.colorAttachments[0].texture = texture;
+	descriptor.colorAttachments[0].texture = textures[current_surface];
 	descriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
 	descriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.5, 0.5, 0.5, 1);
 
@@ -200,8 +196,8 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor)
 	        [command_buffer renderCommandEncoderWithDescriptor:descriptor];
 
 	Arguments arguments = {0};
-	arguments.resolution.x = texture.width;
-	arguments.resolution.y = texture.height;
+	arguments.resolution.x = textures[current_surface].width;
+	arguments.resolution.y = textures[current_surface].height;
 	arguments.rectangles_address = rectangles_buffer.gpuAddress;
 
 	[encoder setRenderPipelineState:pipeline_state];
@@ -222,7 +218,9 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor)
 
 	[command_buffer commit];
 	[command_buffer waitUntilCompleted];
-	[self.layer setContentsChanged];
+
+	self.layer.contents = (__bridge id)io_surfaces[current_surface];
+	current_surface = (current_surface + 1) % ArrayCount(io_surfaces);
 
 	ArenaClear(frame_arena);
 	last_frame_time = now;
@@ -306,7 +304,7 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor)
 	}
 
 	UI_EnqueueEvent(event);
-	self.needsDisplay = YES;
+	display_link.paused = NO;
 }
 
 - (void)updateTrackingAreas
@@ -326,18 +324,18 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor)
 - (void)setFrameSize:(NSSize)size
 {
 	[super setFrameSize:size];
-	[self updateIOSurface];
+	[self updateIOSurfaces];
 	self.needsDisplay = YES;
 }
 
 - (void)viewDidChangeBackingProperties
 {
 	[super viewDidChangeBackingProperties];
-	[self updateIOSurface];
+	[self updateIOSurfaces];
 	self.needsDisplay = YES;
 }
 
-- (void)updateIOSurface
+- (void)updateIOSurfaces
 {
 	NSSize size = [self convertSizeToBacking:self.layer.frame.size];
 
@@ -354,15 +352,17 @@ BuildUI(Arena *frame_arena, f32 delta_time, f32 scale_factor)
 	descriptor.usage = MTLTextureUsageRenderTarget;
 	descriptor.pixelFormat = MTLPixelFormatBGRA8Unorm;
 
-	if (io_surface != NULL)
+	for (smm i = 0; i < ArrayCount(io_surfaces); i++)
 	{
-		CFRelease(io_surface);
+		if (io_surfaces[i] != NULL)
+		{
+			CFRelease(io_surfaces[i]);
+		}
+		io_surfaces[i] = IOSurfaceCreate((__bridge CFDictionaryRef)properties);
+		textures[i] = [device newTextureWithDescriptor:descriptor
+		                                     iosurface:io_surfaces[i]
+		                                         plane:0];
 	}
-
-	io_surface = IOSurfaceCreate((__bridge CFDictionaryRef)properties);
-	texture = [device newTextureWithDescriptor:descriptor iosurface:io_surface plane:0];
-
-	self.layer.contents = (__bridge id)io_surface;
 }
 
 - (void)dealloc
